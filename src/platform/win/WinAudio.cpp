@@ -4,8 +4,6 @@
 
 #include <windows.h>
 #include <endpointvolume.h>
-#include <initguid.h> // defines PKEY_Device_FriendlyName in this translation unit
-#include <functiondiscoverykeys_devpkey.h>
 #include <mmdeviceapi.h>
 #include <propidl.h>
 
@@ -15,6 +13,11 @@
 namespace platform {
 
   namespace {
+
+    // PKEY_Device_FriendlyName, defined here so we don't depend on functiondiscoverykeys_devpkey.h
+    // (which needs extra setup to compile with MSVC).
+    const PROPERTYKEY kDeviceFriendlyName = {
+        {0xa45c254e, 0xdf1c, 0x4efd, {0x80, 0x20, 0x67, 0xd1, 0x46, 0xa8, 0x50, 0xe0}}, 14};
 
     template <typename T> void safeRelease(T*& p) {
       if (p != nullptr) {
@@ -180,7 +183,7 @@ namespace platform {
         if (SUCCEEDED(m_device->OpenPropertyStore(STGM_READ, &store))) {
           PROPVARIANT pv;
           PropVariantInit(&pv);
-          if (SUCCEEDED(store->GetValue(PKEY_Device_FriendlyName, &pv)) && pv.vt == VT_LPWSTR) {
+          if (SUCCEEDED(store->GetValue(kDeviceFriendlyName, &pv)) && pv.vt == VT_LPWSTR) {
             name = pv.pwszVal;
           }
           PropVariantClear(&pv);
