@@ -2,6 +2,7 @@ import QtQuick
 import QtQuick.Window
 import Noctalia
 import "../Commons"
+import "../Commons/TooltipPosition.js" as TooltipPosition
 
 // Small floating tooltip window shared by all widgets of a bar.
 // show(item, text, below) places it centered under (or above) `item`.
@@ -15,7 +16,7 @@ Window {
   flags: Qt.ToolTip | Qt.FramelessWindowHint | Qt.WindowTransparentForInput | Qt.WindowDoesNotAcceptFocus
          | Qt.WindowStaysOnTopHint | Qt.NoDropShadowWindowHint
   color: "transparent"
-  width: Math.ceil(label.implicitWidth + 2 * Style.spaceMd)
+  width: Math.min(Math.ceil(label.implicitWidth + 2 * Style.spaceMd), Math.max(1, screen.width - 16))
   height: Math.ceil(label.implicitHeight + 2 * Style.spaceSm)
   visible: false
 
@@ -25,6 +26,8 @@ Window {
       return;
     }
     target = item;
+    if (item.Window.window && item.Window.window.screen)
+      screen = item.Window.window.screen;
     text = txt;
     below = placeBelow;
     delay.restart();
@@ -40,8 +43,10 @@ Window {
     if (!target)
       return;
     const p = target.mapToGlobal(target.width / 2, below ? target.height : 0);
-    x = Math.round(p.x - width / 2);
-    y = Math.round(below ? p.y + Style.spaceSm + 6 : p.y - height - Style.spaceSm - 6);
+    const pos = TooltipPosition.position(p.x, p.y, width, height, below,
+        Style.spaceSm + 6, screen.virtualX, screen.virtualY, screen.width, screen.height, 8);
+    x = pos.x;
+    y = pos.y;
   }
 
   Timer {
@@ -64,6 +69,9 @@ Window {
       id: label
       anchors.centerIn: parent
       text: root.text
+      width: root.width - 2 * Style.spaceMd
+      wrapMode: Text.Wrap
+      horizontalAlignment: Text.AlignHCenter
       font.pixelSize: Style.fontSizeCaption
       font.weight: Font.Normal
     }
