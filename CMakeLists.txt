@@ -17,6 +17,7 @@ set(SOURCES
     src/core/Glyphs.cpp src/core/Glyphs.h
     src/services/AudioService.cpp src/services/AudioService.h
     src/services/SystemServices.cpp src/services/SystemServices.h
+    src/services/HardwareService.cpp src/services/HardwareService.h
     src/services/ShellService.cpp src/services/ShellService.h
     src/services/LauncherService.cpp src/services/LauncherService.h
     src/services/PanelService.cpp src/services/PanelService.h
@@ -88,6 +89,7 @@ qt_add_resources(noctalia-win "assets"
     PREFIX "/"
     BIG_RESOURCES
     FILES
+        assets/system-info.ps1
         assets/palettes.json
         assets/glyphs.json
         assets/emoji.json

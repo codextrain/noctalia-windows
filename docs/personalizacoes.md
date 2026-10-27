@@ -85,3 +85,23 @@ O widget Aplicativos da area atual (running-apps) mostra somente icones, por jan
 Os icones reais e os handles vem do DockService e do provedor de icones existente, com uma atualizacao compartilhada por segundo quando o dock esta desligado. Nao exige ativar o dock flutuante. O novo widget fica a direita no layout padrao e pode ser movido/removido em Barra. O widget Midia permanece disponivel no editor, mas saiu do layout aplicado para retirar o titulo da reproducao.
 Requer estado recente do NiriWin para determinar a area e o monitor. Sem esse estado, o widget fica oculto. Nao e uma lista global de todos os aplicativos do Windows.
 Validacao: 20 testes JavaScript passaram, cobrindo filtro por area, monitor, destaque e estado antigo/pausado. Um teste QML carregou os icones reais do Chrome e ChatGPT pelo executavel instalado e confirmou Image.Ready nos dois. Nao foi feita captura visual da barra nesta etapa. Os novos padroes C++ ficaram nos fontes, sem recompilacao local do Qt.
+# Informações do computador
+
+A Central de controle tem a categoria **Sobre este PC**: processador e contagem
+de núcleos/threads, placas de vídeo, memória física instalada, placa-mãe,
+armazenamento e edição/build do Windows. Todos os ícones da lateral mostram
+o nome da categoria ao passar o mouse, após 450 ms.
+
+A consulta usa CIM do Windows em um processo separado, sem rede, elevação ou
+coleta de números de série. O resultado fica em memória e é reutilizado ao
+reabrir a categoria; o botão Atualizar faz uma nova consulta. Há limite de
+30 segundos e mensagens para componentes indisponíveis. A capacidade dos discos
+é exibida em unidades de 1024³ bytes, como nas demais telas do aplicativo.
+
+Esta funcionalidade exige recompilar o executável: `Hardware` é um novo serviço
+nativo. Copiar apenas o QML para um executável anterior não instala o recurso.
+
+Validação local em 27/10/2026: o script consultou CPU, GPU, RAM, placa-mãe, dois
+discos e Windows reais, com JSON e acentos corretos; os 20 testes JavaScript
+existentes passaram. A compilação C++ e a interação visual da nova tela não foram
+executadas nesta máquina, que não possui o SDK Qt instalado.

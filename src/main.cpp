@@ -1,3 +1,4 @@
+#include "services/HardwareService.h"
 // Noctalia for Windows — an unofficial port of the Noctalia desktop shell (https://noctalia.dev).
 
 #include "core/Config.h"
@@ -118,6 +119,7 @@ int main(int argc, char* argv[]) {
   NetworkService network;
   WorkspaceService workspaces;
   SystemMonitorService systemMonitor;
+  HardwareService hardware;
   MediaService media;
   BluetoothService bluetooth;
   WifiService wifi;
@@ -138,6 +140,7 @@ int main(int argc, char* argv[]) {
   qmlRegisterSingletonInstance("Noctalia", 1, 0, "Network", &network);
   qmlRegisterSingletonInstance("Noctalia", 1, 0, "Workspaces", &workspaces);
   qmlRegisterSingletonInstance("Noctalia", 1, 0, "SystemMonitor", &systemMonitor);
+  qmlRegisterSingletonInstance("Noctalia", 1, 0, "Hardware", &hardware);
   qmlRegisterSingletonInstance("Noctalia", 1, 0, "Media", &media);
   qmlRegisterSingletonInstance("Noctalia", 1, 0, "Bluetooth", &bluetooth);
   qmlRegisterSingletonInstance("Noctalia", 1, 0, "Wifi", &wifi);

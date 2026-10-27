@@ -21,12 +21,15 @@ PanelWindow {
     { key: "audio", title: "Áudio", icon: "volume", source: "AudioTab.qml" },
     { key: "monitor", title: "Monitor", icon: "device-desktop", source: "MonitorTab.qml" },
     { key: "system", title: "Sistema", icon: "activity-heartbeat", source: "SystemTab.qml" },
+    { key: "hardware", title: "Sobre este PC", icon: "cpu-usage", source: "HardwareTab.qml" },
     { key: "power", title: "Energia", icon: "battery-charging-2", source: "PowerTab.qml" },
     { key: "network", title: "Rede", icon: "wifi", source: "NetworkTab.qml" },
     { key: "bluetooth", title: "Bluetooth", icon: "bluetooth", source: "BluetoothTab.qml" },
     { key: "weather", title: "Clima", icon: "weather-cloud-sun", source: "WeatherTab.qml" },
     { key: "calendar", title: "Calendário", icon: "calendar-event", source: "CalendarTab.qml" },
   ]
+  NTooltip { id: categoryTip }
+  onShownChanged: if (!shown) categoryTip.hide()
   property string currentTab: "home"
   readonly property var currentMeta: tabs.find(t => t.key === currentTab) ?? tabs[0]
 
@@ -63,6 +66,8 @@ PanelWindow {
           delegate: Rectangle {
             id: tabButton
             required property var modelData
+            Accessible.name: modelData.title
+            Accessible.role: Accessible.Button
             readonly property bool isCurrent: cc.currentTab === modelData.key
             readonly property bool hovered: tabMouse.containsMouse
             width: 32 + Style.spaceXs * 2
@@ -85,7 +90,9 @@ PanelWindow {
               anchors.fill: parent
               hoverEnabled: true
               cursorShape: Qt.PointingHandCursor
-              onClicked: cc.currentTab = tabButton.modelData.key
+              onEntered: categoryTip.show(tabButton, tabButton.modelData.title, true)
+              onExited: categoryTip.hide()
+              onClicked: { categoryTip.hide(); cc.currentTab = tabButton.modelData.key; }
             }
           }
         }
