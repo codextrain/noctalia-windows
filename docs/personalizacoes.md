@@ -26,7 +26,7 @@ Copie `tools/gpu-agent/target/release/noctalia-gpu.exe` para a pasta do `noctali
 
 Para carregar estes QML com um executável já instalado, use `tools/Start-Noctalia.ps1 -Executable "C:\Noctalia\noctalia.exe"`. Acrescente `-Background` para iniciar sem abrir as configurações, ou `-NiriStatusPath "C:\NiriWin\state\status.json"` para fornecer o estado do gerenciador. O auxiliar da GPU deve estar junto do executável. Os logs deste lançador ficam em `%LOCALAPPDATA%\noctalia-win\dev-launcher`.
 
-O NiriWin é um projeto separado: seu código e executável não fazem parte deste repositório. Para mostrar uma bolinha numerada por janela, configure `NOCTALIA_NIRIWIN_STATUS` com a URL local do `state/status.json` publicado pelo NiriWin antes de abrir o Noctalia. O widget usa o monitor e suas coordenadas para filtrar janelas e destaca a ativa; sem estado recente, não mostra indicadores fictícios.
+O NiriWin é um projeto separado: seu código e executável não fazem parte deste repositório. Para mostrar uma bolinha numerada por janela, configure `NOCTALIA_NIRIWIN_STATUS` com a URL local do `state/status.json` publicado pelo NiriWin antes de abrir o Noctalia. O widget usa o monitor e suas coordenadas para filtrar janelas e destaca a ativa. Sem o NiriWin (ou sem estado recente), o mesmo widget volta a mostrar as áreas de trabalho virtuais do Windows.
 
 Configurações → Aparência oferece arredondamento de janelas de 0–100%, salvo em `windows.corner_rounding_percent`. **A aplicação nas janelas depende do NiriWin ativo e compatível**, que lê as preferências do Noctalia. O máximo corresponde a raio de 32 pixels no NiriWin atual.
 
@@ -34,7 +34,7 @@ O blur permanece experimental e desligado por padrão. Aplicativos com fundo opa
 
 ## Validação e limites
 
-Os 16 testes JavaScript passaram localmente em 27/10/2026:
+Os testes JavaScript passaram localmente em 27/10/2026:
 
 ```powershell
 node --test tests/*.test.cjs
