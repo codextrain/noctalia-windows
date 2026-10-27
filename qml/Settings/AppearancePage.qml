@@ -30,6 +30,31 @@ Column {
   SettingSection {
     title: "Janelas dos aplicativos"
     SettingRow {
+      label: "Win + arrastar para organizar"
+      description: "Arraste com o botão esquerdo para trocar os lados ou mover ao outro monitor. Escape cancela o arraste."
+      NToggle {checked:Config.windows.win_drag_enabled ?? true;onToggled:on=>Config.setValue("windows.win_drag_enabled",on)}
+    }
+    SettingRow {
+      label: "Alt + clique esquerdo para destacar"
+      description: "Centraliza a janela e recolhe sua parceira na mesma área. Repita o gesto para voltar ao par. Aplicado pelo NiriWin."
+      NToggle { checked: Config.windows.alt_click_spotlight_enabled ?? true; onToggled: on => Config.setValue("windows.alt_click_spotlight_enabled",on) }
+    }
+    SettingRow {
+      label: "Bordas com a cor do tema"
+      description: "Cor de destaque na janela ativa e tom discreto nas demais. Aplicado pelo NiriWin nas janelas compatíveis."
+      NToggle { checked: Config.windows.border_enabled ?? true; onToggled: on => Config.setValue("windows.border_enabled",on) }
+    }
+    SettingRow {
+      label: "Movimento suave das janelas"
+      description: "Suaviza o encaixe e o reposicionamento ao abrir ou fechar uma janela. A abertura e o fechamento do aplicativo usam os efeitos do Windows."
+      NToggle { checked: Config.windows.layout_animation_enabled ?? true; onToggled: on => Config.setValue("windows.layout_animation_enabled",on) }
+    }
+    SettingRow {
+      label: "Transição do papel de parede"
+      description: "Desvanece a imagem anterior por 350 ms, atrás dos aplicativos. Disponível nos modos preencher, ajustar e esticar."
+      NToggle { checked: Config.wallpaper.transition_enabled ?? true; onToggled: on => Config.setValue("wallpaper.transition_enabled",on) }
+    }
+    SettingRow {
       label: "Blur dos aplicativos compatíveis"
       description: "O Noctalia fica excluído para evitar margens brancas. Aplicativos com fundo opaco podem não mostrar o efeito."
       NToggle { checked: Config.windows.blur_enabled ?? false; onToggled: enabled => appearancePage.setBlurEnabled(enabled) }

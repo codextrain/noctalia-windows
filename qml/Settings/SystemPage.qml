@@ -14,8 +14,16 @@ Column {
     }
     SettingRow {
       label: "Esconder a barra de tarefas do Windows"
-      description: "Liga o \"ocultar automaticamente\" dela enquanto o Noctalia roda e devolve ao sair."
-      NToggle { checked: Config.windows.autohide_taskbar ?? false; onToggled: on => Config.setValue("windows.autohide_taskbar", on) }
+      description: "Oculta de verdade, sem aparecer ao passar o mouse. Desligue esta opção para mostrar novamente. Requer NiriWin ativo; pausar ou parar restaura a barra."
+      NToggle { checked: Config.windows.hide_taskbar_permanently ?? false; onToggled: on => {
+        if(on) Config.setValue("windows.autohide_taskbar",false);
+        Config.setValue("windows.hide_taskbar_permanently",on);
+      } }
+    }
+    SettingRow {
+      label: "Mostrar a barra do Windows"
+      description: "Desativa a ocultação completa."
+      NIconButton {icon:"eye";onClicked:Config.setValue("windows.hide_taskbar_permanently",false)}
     }
     SettingRow {
       label: "Esconder a barra em tela cheia"

@@ -362,6 +362,14 @@ bool AppBarItem::handleNativeMessage(unsigned message, std::uintptr_t wParam, st
     return false;
   }
 #ifdef Q_OS_WIN
+  static const UINT taskbarCreated = RegisterWindowMessageW(L"TaskbarCreated");
+  if (message == taskbarCreated) {
+    // Explorer forgot all registered app bars. Recreate the native registration.
+    m_appBar.reset();
+    if (m_fullscreen) { m_fullscreen=false; emit fullscreenAppChanged(); }
+    scheduleUpdate();
+    return false;
+  }
   if (message == WM_ACTIVATE) {
     m_appBar->notifyActivated();
     return false; // let Qt see it too

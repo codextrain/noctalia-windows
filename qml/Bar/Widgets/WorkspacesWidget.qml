@@ -5,8 +5,8 @@ import "../../Widgets"
 import "../../Commons/WindowIndicators.js" as WindowIndicators
 
 // Two modes:
-//  - NiriWin running (Shell.niriStatusUrl found and fresh): one numbered pill per window on
-//    this bar's monitor, the active one highlighted.
+//  - NiriWin running (Shell.niriStatusUrl found and fresh): one pill per workspace on
+//    this bar's monitor (up to two windows), the active one highlighted.
 //  - otherwise: Windows virtual desktops drawn like Noctalia's default workspace pills
 //    (16px high, focused = 2.2x wide, occupied = secondary, empty = secondary at 55%).
 //    Scroll up/down = previous/next desktop.
@@ -15,7 +15,8 @@ Item {
   property var bar: null
   property var entries: []
   property bool loading: false
-  readonly property bool niriMode: entries.length > 0
+  property bool niriAvailable: false
+  readonly property bool niriMode: niriAvailable
   readonly property bool shown: niriMode || Workspaces.model.length > 0
   readonly property real capsuleHeight: bar ? bar.capsuleHeight : 26
   readonly property real pillHeight: Style.baseGlyphSize
@@ -27,17 +28,19 @@ Item {
 
   function refresh() {
     if (loading) return;
-    if (!statusUrl.length || !monitorName.length) { entries = []; return; }
+    if (!statusUrl.length || !monitorName.length) { niriAvailable=false; entries = []; return; }
     loading = true;
     const request = new XMLHttpRequest();
     request.onreadystatechange = function() {
       if (request.readyState !== XMLHttpRequest.DONE) return;
       root.loading = false;
       const screen = root.bar ? root.bar.screen : null;
-      root.entries = WindowIndicators.read(request.responseText, root.monitorName, Date.now(), screen ? screen.virtualX : undefined, screen ? screen.virtualY : undefined);
+      const view=WindowIndicators.view(request.responseText, root.monitorName, Date.now(), screen ? screen.virtualX : undefined, screen ? screen.virtualY : undefined);
+      root.niriAvailable=view.niri;
+      root.entries = view.entries;
     };
     try { request.open("GET", statusUrl); request.send(); }
-    catch (e) { loading = false; entries = []; }
+    catch (e) { loading = false; niriAvailable=false; entries = []; }
   }
   Component.onCompleted: refresh()
   // Only poll when NiriWin's status file was configured.
@@ -50,7 +53,7 @@ Item {
     color: Theme.colors.surfaceContainer
   }
 
-  // ── NiriWin: numbered windows ─────────────────────────────────────────────
+  // ── NiriWin: numbered workspaces ──────────────────────────────────────────
   Row {
     id: niriRow
     visible: root.niriMode
@@ -78,11 +81,16 @@ Item {
           anchors.centerIn: parent
           width: parent.width + root.gap
           height: root.capsuleHeight
-          acceptedButtons: Qt.NoButton
+          acceptedButtons: Qt.LeftButton
+          cursorShape: dot.modelData.empty ? Qt.ArrowCursor : Qt.PointingHandCursor
           hoverEnabled: true
+          onClicked: {
+            if (root.bar) root.bar.hideTooltip();
+            if (dot.modelData.id.length) Dock.focusWindow(dot.modelData.id);
+          }
           onContainsMouseChanged: {
             if (!root.bar) return;
-            if (containsMouse) root.bar.showTooltip(dot, "Janela " + dot.modelData.number + (dot.modelData.active ? " — ativa" : ""));
+            if (containsMouse) root.bar.showTooltip(dot, "Área " + dot.modelData.number + " — " + (dot.modelData.empty ? "vazia" : dot.modelData.spotlight ? "1 de " + dot.modelData.count + " janelas — destaque" : dot.modelData.count + (dot.modelData.count === 1 ? " janela" : " janelas")) + (dot.modelData.active ? " — ativa" : ""));
             else root.bar.hideTooltip();
           }
         }
@@ -120,8 +128,8 @@ Item {
         readonly property bool occupied: modelData.occupied
         readonly property bool hovered: pillMouse.containsMouse
 
-        width: Math.round(root.pillHeight * (focused ? 2.2 : 1.0))
-        height: root.pillHeight
+        width: Math.max(focused ? 32 : 22, desktopNumber.implicitWidth + 10)
+        height: 22
         radius: height / 2
         anchors.verticalCenter: parent.verticalCenter
         color: hovered ? Theme.colors.hover
@@ -131,6 +139,14 @@ Item {
 
         Behavior on width {
           NumberAnimation { duration: Style.animNormal; easing.type: Easing.OutCubic }
+        }
+        NText {
+          id:desktopNumber
+          anchors.centerIn:parent
+          text:String(pill.modelData.index + 1)
+          font.pixelSize:12
+          font.weight:Font.Bold
+          color:pill.focused ? Theme.colors.onPrimary : Theme.colors.onSurface
         }
         Behavior on color {
           ColorAnimation { duration: Style.animFast; easing.type: Easing.OutCubic }

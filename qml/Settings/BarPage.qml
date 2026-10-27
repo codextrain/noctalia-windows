@@ -10,6 +10,7 @@ Column {
   spacing: Style.spaceMd
 
   readonly property var allWidgets: [
+    { key: "running-apps", text: "Aplicativos da área atual", icon: "apps" },
     { key: "gpu-cat", text: "Gato da GPU", icon: "cat" },
     { key: "launcher", text: "Launcher", icon: "search" }, { key: "wallpaper", text: "Papel de parede", icon: "alien" },
     { key: "workspaces", text: "Janelas", icon: "layout-grid" }, { key: "clock", text: "Relógio", icon: "clock" },

@@ -48,6 +48,10 @@ Window {
   readonly property int sidePad: shadowEnabled ? 14 : 0 // room for the shadow left/right of the bar
   readonly property int reservedThickness: marginEdge + thickness + marginOpposite
   readonly property bool hiddenForFullscreen: hideOnFullscreen && appBar.fullscreenApp
+  property bool renewingReservation: false
+  // Release/re-register once after all startup windows and shell services settle.
+  Timer { interval:1000;running:barWindow.reserveSpace;repeat:false;onTriggered:{barWindow.renewingReservation=true;reservationResume.start();} }
+  Timer { id:reservationResume;interval:120;onTriggered:barWindow.renewingReservation=false }
 
   // ── window ────────────────────────────────────────────────────────────────
   flags: Qt.FramelessWindowHint | Qt.Tool | Qt.WindowStaysOnTopHint | Qt.WindowDoesNotAcceptFocus
@@ -70,7 +74,7 @@ Window {
     window: barWindow
     edge: barWindow.atTop ? "top" : "bottom"
     thickness: barWindow.reservedThickness
-    active: barWindow.reserveSpace
+    active: barWindow.reserveSpace && !barWindow.renewingReservation
   }
 
   // ── tooltip & menus (shared by all widgets of this bar) ───────────────────
@@ -129,12 +133,14 @@ Window {
     "weather": weatherComponent,
     "sysmon": sysmonComponent,
     "gpu-cat": gpuCatComponent,
+    "running-apps": runningAppsComponent,
     "wallpaper": wallpaperComponent,
     "clipboard": clipboardComponent,
     "tray": trayComponent,
   })
 
   Component { id: launcherComponent; LauncherWidget {} }
+  Component { id: runningAppsComponent; RunningAppsWidget {} }
   Component { id: workspacesComponent; WorkspacesWidget {} }
   Component { id: clockComponent; ClockWidget {} }
   Component { id: networkComponent; NetworkWidget {} }
