@@ -7,7 +7,11 @@ Item {
   id:root
   property var bar:null
   readonly property var screen:bar ? bar.screen : null
-  readonly property var entries:Apps.current(Style.niriState,Dock.items,screen ? screen.name : "",Date.now(),screen ? screen.virtualX : undefined,screen ? screen.virtualY : undefined)
+  readonly property var entries: {
+    const count=Launcher.appCount;
+    const current=Apps.current(Style.niriState,Dock.items,screen ? screen.name : "",Date.now(),screen ? screen.virtualX : undefined,screen ? screen.virtualY : undefined);
+    return Apps.withPins(current,Config.bar.pinned_apps ?? [],Dock.items,id=>Launcher.appInfo(id));
+  }
   readonly property bool shown:entries.length>0
   readonly property real capsuleHeight:bar ? bar.capsuleHeight : 26
   implicitWidth:row.implicitWidth
@@ -47,7 +51,7 @@ Item {
           anchors.fill:parent
           hoverEnabled:true
           cursorShape:Qt.PointingHandCursor
-          onClicked:{if(root.bar)root.bar.hideTooltip();Dock.focusWindow(button.modelData.id);}
+          onClicked:{if(root.bar)root.bar.hideTooltip();if(button.modelData.id)Dock.focusWindow(button.modelData.id);else if(button.modelData.appId)Launcher.launch(button.modelData.appId);}
           onContainsMouseChanged:{if(!root.bar)return;if(containsMouse)root.bar.showTooltip(button,button.modelData.title);else root.bar.hideTooltip();}
         }
       }

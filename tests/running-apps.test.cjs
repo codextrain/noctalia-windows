@@ -8,6 +8,19 @@ function state(){return {running:true,updated_at_ms:1000,windows:[
 const apps=[{name:'Chrome',icon:'chrome',windows:[{handle:'10',title:'Chrome atual'},{handle:'30',title:'Chrome outra area'}]},
  {name:'ChatGPT',icon:'gpt',windows:[{handle:'20',title:'ChatGPT'}]},{name:'Outro monitor',icon:'other',windows:[{handle:'40',title:'Outro monitor'}]},
  {name:'Fixado',icon:'pinned',windows:[]}];
+test('closed pinned apps remain visible without Niri state and duplicate pins are ignored',()=>{
+ const entries=JSON.parse(JSON.stringify(logic.withPins([],['editor','editor'],[],id=>({name:'Editor',icon:'editor-icon'}))));
+ assert.equal(entries.length,1);assert.equal(entries[0].id,'');assert.equal(entries[0].appId,'editor');assert.equal(entries[0].icon,'editor-icon');
+});
+test('a pinned app reuses the active workspace window without a duplicate icon',()=>{
+ const windows=[{id:'11',appId:'editor',active:true},{id:'12',appId:'browser',active:false}];
+ const entries=JSON.parse(JSON.stringify(logic.withPins(windows,['editor'],[],()=>({name:'Editor'}))));
+ assert.equal(entries.length,2);assert.equal(entries[0].id,'11');assert.equal(entries[0].active,true);assert.equal(entries[1].id,'12');
+});
+test('pins can restore a running window on another workspace instead of launching a duplicate',()=>{
+ const entries=logic.withPins([],['editor'],[{appId:'editor',windows:[{handle:'88',minimized:true}]}],()=>({name:'Editor'}));
+ assert.equal(entries[0].id,'88');assert.equal(entries[0].active,false);
+});
 function read(s=state(),monitor='DISPLAY1',now=1100,x,y){return JSON.parse(JSON.stringify(logic.current(s,apps,monitor,now,x,y)));}
 test('shows only icons belonging to the active group on this monitor',()=>{
  assert.deepEqual(read().map(w=>[w.id,w.icon]),[['10','chrome'],['20','gpt']]);

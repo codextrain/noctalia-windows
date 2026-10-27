@@ -46,6 +46,7 @@ Column {
     if (dragging) dragGhost.Drag.drop();
     dragging = false;
   }
+  BarPinnedApps { width: parent.width }
   Rectangle {
     id: dragGhost
     parent: page.Window.window ? page.Window.window.contentItem : page

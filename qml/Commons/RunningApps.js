@@ -16,11 +16,28 @@ function current(state, apps, monitor, now, x, y) {
         var app=apps[i];
         for(var j=0;j<(app.windows||[]).length;j++) {
             var window=app.windows[j];
-            lookup[String(window.handle)]={icon:app.icon||"",name:app.name||"Aplicativo",title:window.title||app.name||"Janela"};
+            lookup[String(window.handle)]={appId:app.appId||"",icon:app.icon||"",name:app.name||"Aplicativo",title:window.title||app.name||"Janela"};
         }
     }
     return windows.map(function(w){
         var app=lookup[w.id] || {icon:"",name:"Aplicativo",title:"Janela " + w.number};
-        return {id:w.id,icon:app.icon,name:app.name,title:app.title,active:w.active===true};
+        return {id:w.id,appId:app.appId||"",icon:app.icon,name:app.name,title:app.title,active:w.active===true};
     });
+}
+// Pins are independent of the bottom dock and remain on every monitor/workspace.
+function withPins(entries, pins, apps, info) {
+    var result=[],seen={};
+    (pins||[]).forEach(function(id){
+        if(typeof id!=="string"||!id||seen[id])return;
+        seen[id]=true;
+        var app=(apps||[]).find(function(a){return a.appId===id;});
+        var meta=info(id)||{};
+        var current=entries.find(function(w){return w.appId===id&&w.active;})
+            ||entries.find(function(w){return w.appId===id;});
+        var window=current||(app&&app.windows||[])[0];
+        result.push({id:window?String(window.id||window.handle):"",appId:id,pinned:true,
+            title:meta.name||(app&&app.name)||id,icon:meta.icon||(app&&app.icon)||"",
+            active:!!(current&&current.active)});
+    });
+    return result.concat(entries.filter(function(w){return !seen[w.appId];}));
 }
