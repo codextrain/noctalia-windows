@@ -262,10 +262,7 @@ PanelWindow {
         }
         NIconButton {
           icon: "settings"
-          onClicked: {
-            Panels.close();
-            Config.openInEditor();
-          }
+          onClicked: Shell.openSettings("launcher")
         }
       }
     }

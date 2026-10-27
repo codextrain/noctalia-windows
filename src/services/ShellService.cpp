@@ -11,6 +11,8 @@
 #include <QScreen>
 #include <QSet>
 #include <QSysInfo>
+#include <QDir>
+#include <QSettings>
 #include <QTimer>
 #include <QUrl>
 
@@ -51,6 +53,33 @@ QString ShellService::userName() const {
 
 QString ShellService::osName() const { return QSysInfo::prettyProductName(); }
 
+namespace {
+  constexpr const char* kRunKey = R"(HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Run)";
+}
+
+bool ShellService::autostart() const {
+#ifdef Q_OS_WIN
+  QSettings run(kRunKey, QSettings::NativeFormat);
+  return run.contains("Noctalia");
+#else
+  return false;
+#endif
+}
+
+void ShellService::setAutostart(bool on) {
+#ifdef Q_OS_WIN
+  QSettings run(kRunKey, QSettings::NativeFormat);
+  if (on) {
+    run.setValue("Noctalia", "\"" + QDir::toNativeSeparators(QCoreApplication::applicationFilePath()) + "\"");
+  } else {
+    run.remove("Noctalia");
+  }
+#else
+  Q_UNUSED(on)
+#endif
+  emit autostartChanged();
+}
+
 QString ShellService::env(const QString& name) const { return qEnvironmentVariable(name.toUtf8().constData()); }
 
 void ShellService::startMenu() const { platform::triggerShellAction(platform::ShellAction::StartMenu); }
@@ -61,6 +90,7 @@ void ShellService::notificationCenter() const {
 }
 void ShellService::powerMenu() const { platform::triggerShellAction(platform::ShellAction::PowerUserMenu); }
 void ShellService::taskView() const { platform::triggerShellAction(platform::ShellAction::TaskView); }
+void ShellService::trayOverflow() const { platform::triggerShellAction(platform::ShellAction::TrayOverflow); }
 void ShellService::openUri(const QString& uri) const { QDesktopServices::openUrl(QUrl(uri)); }
 void ShellService::quit() const { QCoreApplication::quit(); }
 

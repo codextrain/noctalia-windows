@@ -1,180 +1,141 @@
 # Noctalia para Windows
 
 Port não oficial do [Noctalia](https://noctalia.dev) (desktop shell do Linux) para o Windows 10/11.
-Mesma cara, mesmas paletas, mesmos ícones e as mesmas medidas da barra do Noctalia, reescrito em
+Mesma cara, mesmas paletas, mesmos ícones e o mesmo gerador de cores do Noctalia, reescrito em
 **Qt 6 + C++ + QML** em cima das APIs do Windows.
 
 ![Barra no tema Noctalia](docs/preview-dark.png)
-![Tema claro e Catppuccin com cápsulas](docs/preview-variants.png)
 
-> **Estado atual: fase 1 (a barra).** Barra flutuante por monitor que reserva espaço na tela
-> como a barra de tarefas, áreas de trabalho, relógio, rede, volume, bateria, menu de sessão
-> e as 10 paletas do Noctalia com troca ao vivo. Os botões que no Noctalia abrem painéis
-> próprios (launcher, central de controle, calendário) por enquanto abrem o equivalente do
-> Windows. Veja o [roteiro](#roteiro).
+| Launcher | Central de controle |
+|---|---|
+| ![Launcher](docs/launcher.png) | ![Central de controle](docs/control-center.png) |
+| **Papel de parede (cores geradas da imagem)** | **Configurações** |
+| ![Papel de parede](docs/wallpaper.png) | ![Configurações](docs/settings.png) |
 
----
+## O que tem
 
-## Como compilar
+- **Barra** flutuante em cada monitor, que reserva espaço na tela como a barra de tarefas. Widgets:
+  launcher, papel de parede, áreas de trabalho, relógio, mídia, bandeja, notificações, área de
+  transferência, rede, Bluetooth, volume, brilho, bateria, clima, monitor do sistema, central de
+  controle e sessão.
+- **Launcher** (`Alt+Espaço`): todos os apps, inclusive os da Microsoft Store, com ícones e busca
+  sem acento. Abas Recente / Fixado / Todos / Provedores, lista ou grade. Calculadora direto na
+  busca, `/emo` emojis, `/win` janelas abertas, `/session` desligar etc.
+- **Central de controle**: início, mídia (o "tocando agora" do Windows, com capa), áudio (saída,
+  microfone, dispositivo padrão e volume por aplicativo), monitor (brilho, incluindo monitores
+  externos via DDC/CI), sistema, energia (bateria e planos de energia), Wi-Fi (conecta com senha),
+  Bluetooth, clima e calendário.
+- **OSD** de volume, microfone, brilho, Wi-Fi e Bluetooth.
+- **Papel de parede**: painel de miniaturas, troca aleatória ou automática e **cores geradas a
+  partir da imagem** com o mesmo gerador Material You do Noctalia (9 estilos).
+- **Histórico da área de transferência** (`Alt+V`): texto e imagens, fixar e colar direto.
+- **Dock** com ampliação dos ícones e **widgets na área de trabalho** (relógio, mídia, sistema,
+  clima). Os dois vêm desligados, como no Noctalia: ligue nas Configurações.
+- **Configurações** com tudo isso, sem precisar editar arquivo.
 
-### Opção A: sem instalar nada (GitHub Actions) — recomendado para testar
+### O que o Windows não deixa fazer (por enquanto)
 
-1. Crie um repositório no GitHub e envie esta pasta para ele.
-2. Abra a aba **Actions** do repositório. O workflow `build-windows` roda sozinho a cada push.
-3. Quando terminar (uns 5 a 10 minutos na primeira vez), abra a execução e baixe o artefato
-   **noctalia-win**. É uma pasta pronta: descompacte e rode `noctalia.exe`.
+- **Tela de bloqueio própria**: o Windows não permite substituir. O botão "Bloquear" usa a do
+  Windows.
+- **Bandeja do sistema dentro da barra**: outros programas não conseguem mostrar os ícones da
+  bandeja (Discord, Steam...). O widget "Bandeja" abre a lista de ícones ocultos do próprio
+  Windows.
+- **Central de notificações própria**: ler as notificações de outros apps exige instalar o
+  Noctalia como pacote assinado (MSIX). O widget de notificações abre a central do Windows.
+- **Parear dispositivos Bluetooth novos**: abre a página de Bluetooth do Windows.
 
-### Opção B: no seu PC, com Qt Creator
+## Como instalar
 
-1. Instale o **Visual Studio 2022 Build Tools** (ou o Community) marcando
-   *"Desenvolvimento para desktop com C++"*.
-2. Instale o Qt pelo [Qt Online Installer](https://www.qt.io/download-qt-installer-oss)
-   (conta gratuita). Marque **Qt 6.8 → MSVC 2022 64-bit** e o **Qt Creator**.
-3. No Qt Creator: *Arquivo → Abrir arquivo ou projeto…* → escolha o `CMakeLists.txt`.
-4. Selecione o kit *Desktop Qt 6.8 MSVC2022 64bit* e clique em ▶ (Run).
+### Opção A: baixar pronto (GitHub Actions)
 
-> Também compila com o kit **MinGW 64-bit** do próprio instalador do Qt, se você preferir não
-> instalar o Visual Studio.
+1. Na aba **Actions** do repositório, abra a execução mais recente com ✅.
+2. Baixe o artefato **noctalia-win** (fim da página), descompacte numa pasta fixa, como
+   `C:\Noctalia`, e rode o `noctalia.exe`.
+3. Se o Windows avisar *"O Windows protegeu o computador"*, clique em **Mais informações →
+   Executar assim mesmo**. O aviso aparece porque o programa não tem assinatura digital.
 
-### Opção C: linha de comando
+### Opção B: compilar no seu PC
 
-No *x64 Native Tools Command Prompt for VS 2022*:
+1. Instale o **Visual Studio 2022 Build Tools** com *"Desenvolvimento para desktop com C++"*.
+2. Instale o **Qt 6.8** (MSVC 2022 64-bit) e o **Qt Creator** pelo
+   [Qt Online Installer](https://www.qt.io/download-qt-installer-oss).
+3. No Qt Creator, abra o `CMakeLists.txt` e clique em ▶.
 
-```bat
-cmake -S . -B build -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_PREFIX_PATH=C:\Qt\6.8.3\msvc2022_64
-cmake --build build
-mkdir dist && copy build\noctalia.exe dist\
-C:\Qt\6.8.3\msvc2022_64\bin\windeployqt --release --qmldir qml dist\noctalia.exe
-```
-
----
+Precisa do MSVC: mídia, rádios e Bluetooth usam C++/WinRT, que vem com o Windows SDK. Com MinGW
+compila, mas essas três partes ficam desligadas.
 
 ## Como usar
 
-Ao abrir, a barra aparece no topo de cada monitor e as janelas maximizadas passam a começar
-abaixo dela. Os cliques seguem os padrões do Noctalia:
+Os cliques seguem os padrões do Noctalia: **clique esquerdo abre o painel**, **botão direito faz
+a ação rápida** e a **rodinha ajusta** quando faz sentido.
 
-| Widget | Clique | Botão direito | Rolagem |
+| Widget | Clique | Botão direito | Rodinha |
 |---|---|---|---|
-| 🔍 Launcher | Busca do Windows (até o launcher próprio ficar pronto) | Menu Iniciar | |
-| Áreas de trabalho | Vai para a área de trabalho clicada | | Anterior / próxima |
-| Relógio | Calendário e notificações do Windows | | |
-| 🔔 Notificações | Central de notificações | | |
-| Rede | Configurações rápidas | Configurações de rede | |
-| Volume | Configurações rápidas | Silenciar | ±5% |
-| Bateria (só notebook) | Economia de bateria | | |
-| Logo do Noctalia | Configurações rápidas | **Menu do Noctalia** (editar config, recarregar, sair) | |
+| 🔍 Launcher | Launcher | Menu Iniciar | |
+| Papel de parede | Painel de papel de parede | Papel aleatório | |
+| Áreas de trabalho | Vai para a área clicada | | Anterior / próxima |
+| Relógio | Calendário | Notificações do Windows | |
+| Mídia | Aba Mídia | Tocar / pausar | Próxima / anterior |
+| Rede | Aba Rede | Configurações de rede | |
+| Bluetooth | Aba Bluetooth | Liga / desliga | |
+| Volume | Aba Áudio | Silenciar | ±5% |
+| Brilho | Aba Monitor | | ±5% |
+| Bateria | Aba Energia | | |
+| Logo do Noctalia | Central de controle | Menu do Noctalia (configurações, sair) | |
 | ⏻ Sessão | Bloquear, sair, suspender, reiniciar, desligar | | |
-| Espaço vazio da barra | | Configurações rápidas | |
 
-Para **fechar** o Noctalia: botão direito no logo → *Sair do Noctalia*.
+**Atalhos padrão:** `Alt+Espaço` launcher · `Alt+V` área de transferência · `Esc` fecha
+qualquer painel. Dá pra mudar em *Configurações → Launcher e atalhos*.
 
-### Iniciar junto com o Windows
+**Linha de comando:** `noctalia.exe toggle launcher` (também `control-center`, `clipboard`,
+`wallpaper`, `control-center:audio`...), `noctalia.exe reload`, `noctalia.exe quit`. Útil para
+botões do mouse ou AutoHotkey.
 
-`Win + R` → digite `shell:startup` → Enter → crie ali um atalho para o `noctalia.exe`.
-
----
+**Para fechar:** botão direito no logo do Noctalia → *Sair do Noctalia*.
 
 ## Configuração
 
-O arquivo fica em `%LOCALAPPDATA%\noctalia-win\config.json` e é criado na primeira execução.
-Salvou, aplicou: não precisa reiniciar. Os nomes seguem o `config.toml` do Noctalia.
+Tudo pode ser mudado em **Configurações** (botão direito no logo → *Configurações*). Por baixo,
+fica salvo em `%LOCALAPPDATA%\noctalia-win\config.json`, que também pode ser editado à mão e é
+aplicado ao salvar. Os nomes das opções seguem o `config.toml` do Noctalia (`bar.thickness`,
+`dock.magnification_scale`, `osd.position`...).
 
-```json
-{
-  "theme": { "mode": "dark", "builtin": "Noctalia" },
-  "bar": {
-    "position": "top",
-    "thickness": 34,
-    "radius": 12,
-    "margin_edge": 10,
-    "margin_ends": 180,
-    "capsule": false,
-    "start": ["launcher", "workspaces"],
-    "center": ["clock"],
-    "end": ["notifications", "network", "volume", "battery", "control-center", "session"]
-  }
-}
-```
-
-| Chave | Valores | Padrão |
-|---|---|---|
-| `theme.mode` | `dark`, `light`, `auto` (segue o Windows) | `dark` |
-| `theme.builtin` | `Noctalia`, `Ayu`, `Catppuccin`, `Dracula`, `Eldritch`, `Gruvbox`, `Kanagawa`, `Nord`, `Rosé Pine`, `Tokyo-Night` | `Noctalia` |
-| `bar.position` | `top`, `bottom` | `top` |
-| `bar.thickness` | altura da barra em px | `34` |
-| `bar.radius` | arredondamento dos cantos | `12` |
-| `bar.margin_edge` | distância da borda da tela | `10` |
-| `bar.margin_opposite_edge` | espaço entre a barra e as janelas (sombra) | `6` |
-| `bar.margin_ends` | distância das laterais da tela (`0` = barra de ponta a ponta) | `180` |
-| `bar.padding` / `bar.widget_spacing` | respiro interno / espaço entre widgets | `14` / `6` |
-| `bar.background_opacity` | `0.0` a `1.0` | `1.0` |
-| `bar.capsule` | fundo em cápsula atrás de cada widget | `false` |
-| `bar.shadow` | sombra da barra | `true` |
-| `bar.reserve_space` | janelas maximizadas não cobrem a barra | `true` |
-| `bar.start` / `center` / `end` | widgets: `launcher`, `workspaces`, `clock`, `notifications`, `network`, `volume`, `battery`, `control-center`, `session` | ver acima |
-| `shell.font_family` | fonte da interface (vazio = Segoe UI Variable) | `""` |
-| `shell.time_format` / `date_format` | formatos do [Qt](https://doc.qt.io/qt-6/qml-qtqml-qt.html#formatDateTime-method) | `HH:mm` |
-| `shell.corner_radius_scale` | `0` = quadrado, `2` = bem arredondado | `1.0` |
-| `shell.ui_scale` | escala da barra | `1.0` |
-| `shell.animation_enabled` / `animation_speed` | animações | `true` / `1.0` |
-| `windows.autohide_taskbar` | esconde a barra de tarefas do Windows enquanto o Noctalia roda | `false` |
-| `windows.hide_on_fullscreen` | some durante jogos e vídeos em tela cheia | `true` |
-
----
+Para o clima, defina sua cidade em *Configurações → Painéis → Clima*.
 
 ## Se algo der errado
 
-- **A barra de tarefas do Windows ficou escondida:** só acontece com `autohide_taskbar: true`
-  se o Noctalia fechar à força. Abra *Configurações → Personalização → Barra de tarefas →
-  Comportamentos* e desmarque *Ocultar automaticamente*.
-- **Sobrou um espaço vazio no topo depois de fechar:** o Windows libera sozinho em alguns
-  segundos. Se não liberar, reinicie o *Windows Explorer* no Gerenciador de Tarefas.
-- **Erro no `config.json`:** um JSON inválido é ignorado e a última configuração boa continua
-  valendo. Um formatador como o do VS Code mostra onde está o erro.
-
----
+- **A barra de tarefas do Windows ficou escondida:** só acontece com "Esconder a barra de tarefas
+  do Windows" ligado e o Noctalia fechado à força. Em *Configurações do Windows → Personalização →
+  Barra de tarefas → Comportamentos*, desmarque *Ocultar automaticamente*.
+- **Sobrou espaço vazio no topo depois de fechar:** o Windows libera sozinho em alguns segundos.
+  Se não, reinicie o *Windows Explorer* no Gerenciador de Tarefas.
+- **Atalho não funciona:** outro programa já usa a combinação (PowerToys Run usa `Alt+Espaço`).
+  Troque em *Configurações → Launcher e atalhos*.
+- **Brilho de monitor externo não aparece:** ative "DDC/CI" no menu do próprio monitor.
 
 ## Estrutura
 
 ```
 src/
-  main.cpp                inicialização e registro dos serviços no QML
-  core/                   Config (JSON + recarga ao vivo), Theme (paletas), Glyphs (ícones)
-  services/               áudio, bateria, rede, áreas de trabalho, ações do shell, AppBar
-  platform/Platform.h     interface para o sistema (C++ puro, sem Qt)
-  platform/win/           implementação Windows: Core Audio, app bar, áreas de trabalho...
+  core/                   Config, Theme (paletas do Noctalia), Glyphs, MathEval, Worker
+  services/               launcher, painéis, áudio, mídia, Wi-Fi, Bluetooth, brilho, clima,
+                          papel de parede, área de transferência, dock, ícones...
+  platform/Platform.h     interface com o Windows (C++ puro, sem Qt)
+  platform/win/           implementação Windows (Win32, COM, C++/WinRT)
   platform/stub/          dados falsos para rodar a interface no Linux
 qml/
-  Main.qml                uma barra por monitor
-  Bar/BarWindow.qml       a barra (geometria, sombra, seções, menus)
-  Bar/BarWidget.qml       base dos widgets (hover em cápsula, tooltip, cliques)
-  Bar/Widgets/            cada widget da barra
-  Widgets/                componentes reutilizáveis (NGlyph, NText, NTooltip, NContextMenu)
-  Commons/Style.qml       medidas e tempos de animação do Noctalia
-assets/                   paletas, fonte de ícones Tabler, logo
+  Bar/                    barra e widgets
+  Panels/                 launcher, central de controle, papel de parede, área de transferência
+  Osd/ Dock/ Desktop/     OSD, dock, widgets da área de trabalho
+  Settings/               janela de configurações
+  Widgets/ Commons/       componentes e medidas do Noctalia
+third_party/
+  noctalia/               gerador de paletas do Noctalia (MIT, sem mudanças)
+  material_color_utilities/  Material You (Apache 2.0)
 ```
 
-### Editar a interface sem recompilar
-
-Defina `NOCTALIA_QML_DIR` apontando para a pasta `qml` do projeto e abra o `noctalia.exe`:
-ele passa a ler os `.qml` do disco. Mudou um arquivo, feche e abra de novo para ver.
-
-```bat
-set NOCTALIA_QML_DIR=C:\caminho\noctalia-win\qml
-noctalia.exe
-```
-
----
-
-## Roteiro
-
-- [x] **Fase 1 — Barra:** barra flutuante, espaço reservado, multi-monitor, áreas de trabalho,
-      relógio, rede, volume, bateria, sessão, 10 paletas, claro/escuro/auto, config ao vivo
-- [ ] **Fase 2 — Painéis:** launcher próprio (apps, calculadora, emoji), central de controle
-      (volume com mixer, brilho, Wi-Fi, Bluetooth, mídia), calendário
-- [ ] **Fase 3 — Tema do papel de parede:** gerar a paleta a partir do papel de parede (Material You)
-- [ ] **Fase 4 — Extras:** OSD de volume/brilho, bandeja do sistema, notificações próprias, dock
+Para editar a interface sem recompilar, defina `NOCTALIA_QML_DIR` com o caminho da pasta `qml`
+antes de abrir o `noctalia.exe`.
 
 ---
 

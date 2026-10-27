@@ -61,6 +61,12 @@ namespace platform {
     case ShellAction::TaskView:
       win::sendChord({VK_LWIN, VK_TAB});
       break;
+    case ShellAction::TrayOverflow:
+      // Win+B puts keyboard focus on the tray's "show hidden icons" button; Enter opens it.
+      win::sendChord({VK_LWIN, 'B'});
+      Sleep(80);
+      win::sendChord({VK_RETURN});
+      break;
     }
   }
 

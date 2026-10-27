@@ -100,7 +100,7 @@ namespace platform {
   void createDesktop();
 
   // ── Windows shell shortcuts (used until our own panels exist) ────────────
-  enum class ShellAction { StartMenu, Search, QuickSettings, NotificationCenter, PowerUserMenu, TaskView };
+  enum class ShellAction { StartMenu, Search, QuickSettings, NotificationCenter, PowerUserMenu, TaskView, TrayOverflow };
   void triggerShellAction(ShellAction action);
 
   // ── Session (Noctalia's session menu) ────────────────────────────────────

@@ -121,10 +121,7 @@ PanelWindow {
 
           NIconButton {
             icon: "settings"
-            onClicked: {
-              Panels.close();
-              Shell.openUri("ms-settings:");
-            }
+            onClicked: Shell.openSettings("")
           }
           NIconButton {
             icon: "x"

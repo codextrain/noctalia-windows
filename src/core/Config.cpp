@@ -80,7 +80,7 @@ QJsonObject Config::defaults() {
            {"start", QJsonArray{"launcher", "wallpaper", "workspaces"}},
            {"center", QJsonArray{"clock"}},
            // Same order as Noctalia's default (widgets not ported yet are skipped).
-           {"end", QJsonArray{"media", "notifications", "clipboard", "network", "bluetooth", "volume", "brightness", "battery", "control-center", "session"}},
+           {"end", QJsonArray{"media", "tray", "notifications", "clipboard", "network", "bluetooth", "volume", "brightness", "battery", "control-center", "session"}},
        }},
       {"launcher",
        QJsonObject{

@@ -19,6 +19,7 @@ class ShellService : public QObject {
   Q_PROPERTY(bool isWindows READ isWindows CONSTANT)
   Q_PROPERTY(QString userName READ userName CONSTANT)
   Q_PROPERTY(QString osName READ osName CONSTANT)
+  Q_PROPERTY(bool autostart READ autostart WRITE setAutostart NOTIFY autostartChanged)
 
 public:
   explicit ShellService(Config* config, QObject* parent = nullptr);
@@ -28,6 +29,10 @@ public:
   bool isWindows() const;
   QString userName() const;
   QString osName() const;
+  // "Start with Windows" (HKCU\...\Run)
+  bool autostart() const;
+  void setAutostart(bool on);
+  Q_INVOKABLE void openSettings(const QString& page = QString()) { emit settingsRequested(page); }
   // Debug helpers for screenshots (NOCTALIA_* environment variables).
   Q_INVOKABLE QString env(const QString& name) const;
 
@@ -38,10 +43,15 @@ public:
   Q_INVOKABLE void notificationCenter() const;
   Q_INVOKABLE void powerMenu() const;
   Q_INVOKABLE void taskView() const;
+  Q_INVOKABLE void trayOverflow() const;
   Q_INVOKABLE void openUri(const QString& uri) const;
   Q_INVOKABLE void quit() const;
   // "lock" | "logout" | "suspend" | "hibernate" | "reboot" | "shutdown"
   Q_INVOKABLE void session(const QString& action) const;
+
+signals:
+  void autostartChanged();
+  void settingsRequested(const QString& page);
 
 private:
   void applyTaskbarSetting();

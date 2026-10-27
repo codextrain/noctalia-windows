@@ -88,7 +88,8 @@ Window {
 
   function openShellMenu(item) {
     menu.model = [
-      { icon: "settings", text: "Editar configuração", action: () => Config.openInEditor() },
+      { icon: "settings", text: "Configurações", action: () => Shell.openSettings("") },
+      { icon: "file-description", text: "Editar config.json", action: () => Config.openInEditor() },
       { icon: "folder", text: "Abrir pasta da configuração", action: () => Config.openFolder() },
       { icon: "refresh", text: "Recarregar configuração", action: () => Config.reload() },
       { separator: true },
@@ -127,6 +128,7 @@ Window {
     "sysmon": sysmonComponent,
     "wallpaper": wallpaperComponent,
     "clipboard": clipboardComponent,
+    "tray": trayComponent,
   })
 
   Component { id: launcherComponent; LauncherWidget {} }
@@ -145,6 +147,7 @@ Window {
   Component { id: sysmonComponent; SysmonWidget {} }
   Component { id: wallpaperComponent; WallpaperWidget {} }
   Component { id: clipboardComponent; ClipboardWidget {} }
+  Component { id: trayComponent; TrayWidget {} }
 
   component Section: Row {
     id: section
