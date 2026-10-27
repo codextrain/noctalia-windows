@@ -10,5 +10,5 @@ BarWidget {
   onClicked: Panels.toggle("launcher")
   onRightClicked: Shell.startMenu()
 
-  NGlyph { icon: "search"; color: root.foreground }
+  SculptedIcon { symbol: "search" }
 }

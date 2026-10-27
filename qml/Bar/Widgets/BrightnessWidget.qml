@@ -13,8 +13,5 @@ BarWidget {
   onWheelUp: Brightness.change(0.05)
   onWheelDown: Brightness.change(-0.05)
 
-  NGlyph {
-    icon: Brightness.value < 0.4 ? "brightness-low" : "brightness-high"
-    color: root.foreground
-  }
+  SculptedIcon { symbol: "brightness" }
 }

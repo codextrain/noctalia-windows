@@ -20,8 +20,5 @@ BarWidget {
   onWheelUp: Audio.changeVolume(0.05)
   onWheelDown: Audio.changeVolume(-0.05)
 
-  NGlyph {
-    icon: root.glyph
-    color: Audio.muted ? Theme.colors.error : root.foreground
-  }
+  SculptedIcon { symbol: "volume"; disabled: Audio.muted || root.percent === 0 }
 }

@@ -10,5 +10,5 @@ BarWidget {
   onClicked: Panels.toggle("control-center")
   onRightClicked: if (bar) bar.openShellMenu(root)
 
-  NGlyph { icon: "vitoria-cat"; color: root.foreground }
+  SculptedIcon { symbol: "cat" }
 }

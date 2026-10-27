@@ -9,5 +9,5 @@ BarWidget {
   tooltipText: "Sessão"
   onClicked: if (bar) bar.openSessionMenu(root)
 
-  NGlyph { icon: "shutdown"; color: root.foreground }
+  SculptedIcon { symbol: "power" }
 }

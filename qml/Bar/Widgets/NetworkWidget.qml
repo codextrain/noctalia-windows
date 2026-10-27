@@ -10,8 +10,5 @@ BarWidget {
   onClicked: Panels.toggle("control-center:network")
   onRightClicked: Shell.openUri("ms-settings:network-status")
 
-  NGlyph {
-    icon: Network.glyph
-    color: Network.connected ? root.foreground : Theme.colors.error
-  }
+  SculptedIcon { symbol: "network"; disabled: !Network.connected }
 }

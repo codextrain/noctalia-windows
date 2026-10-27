@@ -11,11 +11,7 @@ BarWidget {
   tooltipText: Weather.description + " · " + Weather.locationName
   onClicked: Panels.toggle("control-center:weather")
 
-  NGlyph {
-    icon: Weather.glyph
-    color: root.foreground
-    anchors.verticalCenter: parent.verticalCenter
-  }
+  SculptedIcon { symbol: "weather"; condition: Weather.glyph; anchors.verticalCenter: parent.verticalCenter }
   NText {
     objectName: "weather-temperature"
     anchors.verticalCenter: parent.verticalCenter

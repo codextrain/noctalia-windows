@@ -9,5 +9,5 @@ BarWidget {
   id: root
   tooltipText: "Ícones da bandeja"
   onClicked: Shell.trayOverflow()
-  NGlyph { icon: "chevron-up"; color: root.foreground }
+  SculptedIcon { symbol: "chevron" }
 }
