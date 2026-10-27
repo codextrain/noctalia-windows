@@ -72,11 +72,11 @@ void WallpaperService::pollCurrent() {
   }
 }
 
-void WallpaperService::refresh() {
+void WallpaperService::refresh(bool force) {
   const QString dir = directory();
   const bool recursive = m_config->wallpaper().value("recursive", true).toBool();
   const QString key = dir + (recursive ? "|r" : "|n");
-  if (key == m_scannedKey && !m_images.isEmpty()) {
+  if (!force && key == m_scannedKey && !m_images.isEmpty()) {
     return;
   }
   m_scannedKey = key;
@@ -87,7 +87,7 @@ void WallpaperService::refresh() {
         QStringList files;
         QDirIterator it(dir, {"*.jpg", "*.jpeg", "*.png", "*.bmp", "*.webp", "*.jfif", "*.gif"}, QDir::Files,
                         recursive ? QDirIterator::Subdirectories : QDirIterator::NoIteratorFlags);
-        while (it.hasNext() && files.size() < 2000) {
+        while (it.hasNext() && files.size() < 50000) {
           files.append(it.next());
         }
         std::sort(files.begin(), files.end(), [](const QString& a, const QString& b) {

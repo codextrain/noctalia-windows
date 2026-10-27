@@ -9,6 +9,7 @@
 #include "services/DockService.h"
 #include "services/DeviceServices.h"
 #include "services/WallpaperService.h"
+#include "services/WallpaperStore.h"
 #include "services/WeatherService.h"
 #include "services/IconProvider.h"
 #include "services/LauncherService.h"
@@ -108,6 +109,7 @@ int main(int argc, char* argv[]) {
 
   Config config;
   WallpaperService wallpaper(&config);
+  WallpaperStore wallStore(&config, &wallpaper);
   Theme theme(&config, &wallpaper);
   Glyphs glyphs;
   ShellService shell(&config);
@@ -142,6 +144,7 @@ int main(int argc, char* argv[]) {
   qmlRegisterSingletonInstance("Noctalia", 1, 0, "Brightness", &brightness);
   qmlRegisterSingletonInstance("Noctalia", 1, 0, "Weather", &weather);
   qmlRegisterSingletonInstance("Noctalia", 1, 0, "Wallpaper", &wallpaper);
+  qmlRegisterSingletonInstance("Noctalia", 1, 0, "WallStore", &wallStore);
   qmlRegisterSingletonInstance("Noctalia", 1, 0, "Clipboard", &clipboard);
   qmlRegisterSingletonInstance("Noctalia", 1, 0, "Dock", &dock);
   qmlRegisterSingletonInstance("Noctalia", 1, 0, "Panels", &panels);

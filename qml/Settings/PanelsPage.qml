@@ -37,6 +37,21 @@ Column {
       TextBox { width: 320; value: Config.wallpaper.directory ?? ""; onEdited: v => Config.setValue("wallpaper.directory", v) }
     }
     SettingRow {
+      label: "Pasta dos downloads (Wallhaven e coleções)"
+      description: "Vazio = Imagens\\Wallpapers. Cada fonte ganha uma subpasta."
+      TextBox { width: 320; value: Config.wallpaper.download_directory ?? ""; onEdited: v => Config.setValue("wallpaper.download_directory", v) }
+    }
+    SettingRow {
+      label: "Chave da API do Wallhaven"
+      description: "Opcional: 64 por página em vez de 24 (wallhaven.cc → Settings → Account)."
+      TextBox { width: 320; value: Config.wallpaper.wallhaven?.api_key ?? ""; onEdited: v => Config.setValue("wallpaper.wallhaven.api_key", v.trim()) }
+    }
+    SettingRow {
+      label: "Token do GitHub"
+      description: "Opcional: sem ele, o GitHub deixa abrir umas 30 coleções por hora."
+      TextBox { width: 320; value: Config.wallpaper.github_token ?? ""; onEdited: v => Config.setValue("wallpaper.github_token", v.trim()) }
+    }
+    SettingRow {
       label: "Ajuste"
       NSegmented {
         model: [{ key: "crop", text: "Preencher" }, { key: "fit", text: "Ajustar" }, { key: "stretch", text: "Esticar" }, { key: "center", text: "Centro" }, { key: "span", text: "Estender" }]

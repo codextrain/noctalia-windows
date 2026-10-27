@@ -113,6 +113,16 @@ QJsonObject Config::defaults() {
            {"fill_mode", "crop"},  // crop | fit | stretch | center | repeat | span
            {"recursive", true},
            {"automation", QJsonObject{{"enabled", false}, {"interval_seconds", 1800}, {"order", "random"}}},
+           // Explorar (online wallpapers): downloads go to <download_directory>\wallhaven and \github
+           {"download_directory", ""}, // empty = Pictures\Wallpapers
+           {"collections", QJsonArray{}}, // GitHub "owner/repo" list; empty = the built-in rice collections
+           {"github_token", ""},          // optional: raises GitHub's limit of 60 listings per hour
+           {"wallhaven",
+            QJsonObject{{"api_key", ""},        // optional (wallhaven.cc → Settings → Account)
+                        {"purity", "100"},      // 100 = SFW only
+                        {"categories", "111"},  // general / anime / people
+                        {"top_range", "1y"},
+                        {"ratios", "16x9,16x10,21x9"}}},
        }},
       {"dock",
        QJsonObject{

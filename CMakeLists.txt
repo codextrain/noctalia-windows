@@ -26,6 +26,7 @@ set(SOURCES
     src/services/DeviceServices.cpp src/services/DeviceServices.h
     src/services/WeatherService.cpp src/services/WeatherService.h
     src/services/WallpaperService.cpp src/services/WallpaperService.h
+    src/services/WallpaperStore.cpp src/services/WallpaperStore.h
     src/services/ClipboardService.cpp src/services/ClipboardService.h
     src/services/DockService.cpp src/services/DockService.h
     src/platform/Platform.h

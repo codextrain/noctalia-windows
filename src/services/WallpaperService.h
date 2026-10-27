@@ -30,7 +30,7 @@ public:
 
   Q_INVOKABLE void set(const QString& path);
   Q_INVOKABLE void random();
-  Q_INVOKABLE void refresh();
+  Q_INVOKABLE void refresh(bool force = false);
   Q_INVOKABLE void openFolder() const;
 
 signals:
