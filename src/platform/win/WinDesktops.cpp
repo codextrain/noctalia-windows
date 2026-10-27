@@ -9,6 +9,7 @@
 
 #include "platform/Platform.h"
 #include "platform/win/WinInput.h"
+#include "platform/win/WinWindowUtil.h"
 
 #include <windows.h>
 #include <dwmapi.h>
@@ -88,34 +89,6 @@ namespace platform {
       return buf;
     }
 
-    // A window counts as "on a desktop" if a user would see it in Alt+Tab.
-    bool isUserWindow(HWND hwnd) {
-      if (!IsWindowVisible(hwnd) || GetWindow(hwnd, GW_OWNER) != nullptr) {
-        return false;
-      }
-      const LONG_PTR ex = GetWindowLongPtrW(hwnd, GWL_EXSTYLE);
-      if ((ex & WS_EX_TOOLWINDOW) != 0) {
-        return false;
-      }
-      if (GetWindowTextLengthW(hwnd) == 0) {
-        return false;
-      }
-      DWORD pid = 0;
-      GetWindowThreadProcessId(hwnd, &pid);
-      if (pid == GetCurrentProcessId()) {
-        return false;
-      }
-      // Windows on other virtual desktops are cloaked by the shell; those still count.
-      // Windows cloaked by their own app (suspended UWP apps etc.) do not.
-      DWORD cloaked = 0;
-      if (SUCCEEDED(DwmGetWindowAttribute(hwnd, DWMWA_CLOAKED, &cloaked, sizeof(cloaked)))) {
-        if ((cloaked & (DWM_CLOAKED_APP | DWM_CLOAKED_INHERITED)) != 0) {
-          return false;
-        }
-      }
-      return true;
-    }
-
     struct EnumContext {
       IVirtualDesktopManager* manager = nullptr;
       std::vector<GUID> occupied;
@@ -123,7 +96,7 @@ namespace platform {
 
     BOOL CALLBACK enumWindow(HWND hwnd, LPARAM param) {
       auto* ctx = reinterpret_cast<EnumContext*>(param);
-      if (!isUserWindow(hwnd)) {
+      if (!win::isUserWindow(hwnd)) {
         return TRUE;
       }
       GUID id{};

@@ -3,11 +3,11 @@ import Noctalia
 import ".."
 import "../../Widgets"
 
-// Noctalia: left click = toggle launcher. Until our launcher exists, open Windows Search.
+// Noctalia: left click = toggle launcher. Right click = Windows Start menu.
 BarWidget {
   id: root
   tooltipText: "Buscar aplicativos"
-  onClicked: Shell.search()
+  onClicked: Panels.toggle("launcher")
   onRightClicked: Shell.startMenu()
 
   NGlyph { icon: "search"; color: root.foreground }

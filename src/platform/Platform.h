@@ -111,4 +111,56 @@ namespace platform {
   // Mark a window so it never shows in the taskbar / Alt+Tab and never steals focus.
   void makeShellWindow(void* hwnd);
 
+  // ── Threads ──────────────────────────────────────────────────────────────
+  // Call at the start of any worker thread that uses the functions below (COM on Windows).
+  void initializeThread();
+
+  // ── Images (icons) ───────────────────────────────────────────────────────
+  struct Image {
+    int width = 0;
+    int height = 0;
+    std::vector<std::uint8_t> bgra; // premultiplied BGRA, top-down (= QImage::Format_ARGB32_Premultiplied)
+    bool valid() const { return width > 0 && height > 0; }
+  };
+
+  // ── Installed apps (Noctalia launcher "Applications" provider) ───────────
+  struct AppEntry {
+    std::wstring id;   // shell:AppsFolder parsing name (AUMID for Store apps, path-like for desktop apps)
+    std::wstring name; // display name
+    bool storeApp = false;
+  };
+  std::vector<AppEntry> enumerateApps(); // slow (100-500 ms): call from a worker thread
+  Image appIcon(const std::wstring& id, int size);
+  Image fileIcon(const std::wstring& path, int size);
+  bool launchApp(const std::wstring& id);
+
+  // ── Top-level windows (launcher "Windows" provider, dock) ────────────────
+  struct WindowEntry {
+    std::uintptr_t handle = 0;
+    std::wstring title;
+    std::wstring exePath;
+    std::wstring appId; // AppUserModelID when the window has one (Store apps, pinned apps)
+    bool minimized = false;
+    bool focused = false;
+    bool onCurrentDesktop = true;
+  };
+  std::vector<WindowEntry> enumerateWindows();
+  void activateWindow(std::uintptr_t handle);
+  void closeWindow(std::uintptr_t handle);
+  void minimizeWindow(std::uintptr_t handle);
+  std::uintptr_t foregroundWindow();
+  // Bring one of OUR windows to the front with keyboard focus (works around focus-stealing rules).
+  void bringToFront(void* hwnd);
+
+  // ── Global hotkeys ───────────────────────────────────────────────────────
+  // spec: "Alt+Space", "Ctrl+Shift+V", "Win+Alt+L", "F12"... Returns false if the spec is invalid
+  // or the combination is already taken by Windows / another app.
+  bool registerHotkey(int id, const std::wstring& spec);
+  void unregisterHotkey(int id);
+  // Pass a native message (Windows: MSG*). Returns the hotkey id, or -1 if it isn't a hotkey.
+  int hotkeyFromMessage(const void* nativeMessage);
+
+  // ── Input helpers ────────────────────────────────────────────────────────
+  void sendPaste(); // Ctrl+V into the focused window
+
 } // namespace platform

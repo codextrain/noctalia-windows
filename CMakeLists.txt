@@ -18,6 +18,10 @@ set(SOURCES
     src/services/AudioService.cpp src/services/AudioService.h
     src/services/SystemServices.cpp src/services/SystemServices.h
     src/services/ShellService.cpp src/services/ShellService.h
+    src/services/LauncherService.cpp src/services/LauncherService.h
+    src/services/PanelService.cpp src/services/PanelService.h
+    src/services/IconProvider.cpp src/services/IconProvider.h
+    src/core/MathEval.cpp src/core/MathEval.h
     src/platform/Platform.h
 )
 
@@ -27,6 +31,9 @@ if(WIN32)
       src/platform/win/WinAudio.cpp
       src/platform/win/WinDesktops.cpp
       src/platform/win/WinAppBar.cpp
+      src/platform/win/WinApps.cpp
+      src/platform/win/WinWindows.cpp
+      src/platform/win/WinWindowUtil.h
       src/platform/win/WinInput.h
   )
 else()
@@ -50,6 +57,7 @@ qt_add_resources(noctalia-win "assets"
     FILES
         assets/palettes.json
         assets/glyphs.json
+        assets/emoji.json
         assets/noctalia.svg
         assets/fonts/noctalia-tabler.ttf
 )
@@ -58,7 +66,7 @@ target_link_libraries(noctalia-win PRIVATE Qt6::Core Qt6::Gui Qt6::Qml Qt6::Quic
 
 if(WIN32)
   target_compile_definitions(noctalia-win PRIVATE UNICODE _UNICODE NOMINMAX WIN32_LEAN_AND_MEAN)
-  target_link_libraries(noctalia-win PRIVATE ole32 user32 shell32 advapi32 dwmapi powrprof uuid)
+  target_link_libraries(noctalia-win PRIVATE ole32 user32 shell32 advapi32 dwmapi powrprof uuid gdi32 propsys)
   if(MSVC)
     target_compile_options(noctalia-win PRIVATE /W4 /permissive- /utf-8)
   endif()

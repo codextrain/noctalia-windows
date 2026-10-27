@@ -4,6 +4,7 @@
 #include "platform/Platform.h"
 
 #include <cstdio>
+#include <functional>
 
 namespace platform {
 
@@ -80,5 +81,75 @@ namespace platform {
 
   bool setTaskbarAutoHide(bool) { return false; }
   void makeShellWindow(void*) {}
+
+} // namespace platform
+
+// ── launcher / windows / hotkeys (stub) ─────────────────────────────────────
+
+namespace platform {
+
+  void initializeThread() {}
+
+  std::vector<AppEntry> enumerateApps() {
+    static const wchar_t* names[] = {
+        L"Blender",           L"Calculadora",      L"Discord",        L"Explorador de Arquivos", L"Firefox",
+        L"GIMP",              L"Google Chrome",    L"Microsoft Edge", L"Bloco de Notas",         L"OBS Studio",
+        L"Paint",             L"Prompt de Comando", L"Spotify",       L"Steam",                  L"Terminal",
+        L"Visual Studio Code", L"VLC media player", L"WhatsApp",      L"Word",                   L"Configurações",
+    };
+    std::vector<AppEntry> out;
+    for (const wchar_t* n : names) {
+      out.push_back({std::wstring(L"stub!") + n, n, false});
+    }
+    return out;
+  }
+
+  Image appIcon(const std::wstring& id, int size) {
+    // A colored rounded square so the UI has something to show.
+    Image img;
+    img.width = img.height = size;
+    img.bgra.resize(static_cast<size_t>(size) * size * 4);
+    const unsigned h = static_cast<unsigned>(std::hash<std::wstring>{}(id));
+    const std::uint8_t r = 80 + h % 150, g = 80 + (h / 7) % 150, b = 80 + (h / 49) % 150;
+    const int rad = size / 5;
+    for (int y = 0; y < size; ++y) {
+      for (int x = 0; x < size; ++x) {
+        const int dx = x < rad ? rad - x : (x >= size - rad ? x - (size - rad - 1) : 0);
+        const int dy = y < rad ? rad - y : (y >= size - rad ? y - (size - rad - 1) : 0);
+        const bool inside = dx * dx + dy * dy <= rad * rad;
+        std::uint8_t* p = &img.bgra[(static_cast<size_t>(y) * size + x) * 4];
+        p[0] = inside ? b : 0;
+        p[1] = inside ? g : 0;
+        p[2] = inside ? r : 0;
+        p[3] = inside ? 255 : 0;
+      }
+    }
+    return img;
+  }
+
+  Image fileIcon(const std::wstring& path, int size) { return appIcon(path, size); }
+
+  bool launchApp(const std::wstring& id) {
+    std::printf("[stub] launch %ls\n", id.c_str());
+    return true;
+  }
+
+  std::vector<WindowEntry> enumerateWindows() {
+    return {
+        {.handle = 1, .title = L"Noctalia para Windows — Claude", .exePath = L"chrome.exe", .appId = L"stub!Google Chrome", .focused = true},
+        {.handle = 2, .title = L"main.cpp — noctalia-win — Visual Studio Code", .exePath = L"code.exe", .appId = L"stub!Visual Studio Code"},
+        {.handle = 3, .title = L"Spotify Premium", .exePath = L"spotify.exe", .appId = L"stub!Spotify", .minimized = true},
+    };
+  }
+  void activateWindow(std::uintptr_t h) { std::printf("[stub] activate %zu\n", static_cast<size_t>(h)); }
+  void closeWindow(std::uintptr_t) {}
+  void minimizeWindow(std::uintptr_t) {}
+  std::uintptr_t foregroundWindow() { return 0; }
+  void bringToFront(void*) {}
+
+  bool registerHotkey(int, const std::wstring&) { return true; }
+  void unregisterHotkey(int) {}
+  int hotkeyFromMessage(const void*) { return -1; }
+  void sendPaste() { std::printf("[stub] paste\n"); }
 
 } // namespace platform

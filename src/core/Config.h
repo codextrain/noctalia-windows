@@ -14,6 +14,8 @@ class Config : public QObject {
   Q_PROPERTY(QVariantMap theme READ theme NOTIFY changed)
   Q_PROPERTY(QVariantMap bar READ bar NOTIFY changed)
   Q_PROPERTY(QVariantMap windows READ windows NOTIFY changed)
+  Q_PROPERTY(QVariantMap launcher READ launcher NOTIFY changed)
+  Q_PROPERTY(QVariantMap keybinds READ keybinds NOTIFY changed)
   Q_PROPERTY(QString path READ path CONSTANT)
   Q_PROPERTY(QString lastError READ lastError NOTIFY changed)
 
@@ -26,10 +28,15 @@ public:
   QVariantMap theme() const { return m_data.value("theme").toObject().toVariantMap(); }
   QVariantMap bar() const { return m_data.value("bar").toObject().toVariantMap(); }
   QVariantMap windows() const { return m_data.value("windows").toObject().toVariantMap(); }
+  QVariantMap launcher() const { return m_data.value("launcher").toObject().toVariantMap(); }
+  QVariantMap keybinds() const { return m_data.value("keybinds").toObject().toVariantMap(); }
   QString path() const { return m_path; }
   QString lastError() const { return m_lastError; }
 
   Q_INVOKABLE void reload();
+  // Change one setting and save it to config.json, e.g. setValue("launcher.pinned", list).
+  // Only that key is touched: the rest of the user's file is kept as is.
+  Q_INVOKABLE bool setValue(const QString& dottedPath, const QVariant& value);
   Q_INVOKABLE void openInEditor() const;
   Q_INVOKABLE void openFolder() const;
 

@@ -17,6 +17,8 @@ class ShellService : public QObject {
   Q_OBJECT
   Q_PROPERTY(QString version READ version CONSTANT)
   Q_PROPERTY(bool isWindows READ isWindows CONSTANT)
+  Q_PROPERTY(QString userName READ userName CONSTANT)
+  Q_PROPERTY(QString osName READ osName CONSTANT)
 
 public:
   explicit ShellService(Config* config, QObject* parent = nullptr);
@@ -24,6 +26,10 @@ public:
 
   QString version() const;
   bool isWindows() const;
+  QString userName() const;
+  QString osName() const;
+  // Debug helpers for screenshots (NOCTALIA_* environment variables).
+  Q_INVOKABLE QString env(const QString& name) const;
 
   // Windows' own UI, used by bar buttons until our panels (launcher, control center) exist.
   Q_INVOKABLE void startMenu() const;

@@ -10,6 +10,8 @@
 #include <QStandardPaths>
 #include <QUrl>
 
+#include <functional>
+
 namespace {
 
   // Recursively merge `over` into `base` (objects merge, everything else replaces).
@@ -75,6 +77,28 @@ QJsonObject Config::defaults() {
            // Same order as Noctalia's default (widgets not ported yet are skipped).
            {"end", QJsonArray{"notifications", "network", "volume", "battery", "control-center", "session"}},
        }},
+      {"launcher",
+       QJsonObject{
+           // Same names as Noctalia's [shell.launcher].
+           {"width", 760},
+           {"default_view", "recent"}, // recent | pinned | all
+           {"app_grid", false},
+           {"compact", false},
+           {"show_icons", true},
+           {"track_usage", true},
+           {"sort_by_usage", true},
+           {"provider_prefix", "/"},
+           {"auto_paste", true}, // paste emoji / calculator results into the previous window
+           {"pinned", QJsonArray{}},
+       }},
+      {"keybinds",
+       QJsonObject{
+           // Global shortcuts. Empty string = disabled. Examples: "Alt+Space", "Ctrl+Shift+K", "Win+Alt+V".
+           {"launcher", "Alt+Space"},
+           {"control-center", ""},
+           {"clipboard", ""},
+           {"wallpaper", ""},
+       }},
       {"windows",
        QJsonObject{
            {"autohide_taskbar", false},   // auto-hide the Windows taskbar while the shell runs
@@ -138,6 +162,46 @@ void Config::watch() {
   if (!m_watcher.directories().contains(dir) && QFileInfo::exists(dir)) {
     m_watcher.addPath(dir);
   }
+}
+
+bool Config::setValue(const QString& dottedPath, const QVariant& value) {
+  const QStringList keys = dottedPath.split('.', Qt::SkipEmptyParts);
+  if (keys.isEmpty()) {
+    return false;
+  }
+
+  QJsonObject root;
+  QFile in(m_path);
+  if (in.open(QIODevice::ReadOnly)) {
+    QJsonParseError pe{};
+    const QJsonDocument doc = QJsonDocument::fromJson(in.readAll(), &pe);
+    if (pe.error != QJsonParseError::NoError) {
+      return false; // never overwrite a file the user is in the middle of editing
+    }
+    root = doc.object();
+  }
+  in.close();
+
+  // Walk down creating objects as needed, then rebuild the chain on the way back up.
+  std::function<QJsonObject(QJsonObject, int)> set = [&](QJsonObject obj, int depth) {
+    const QString& key = keys[depth];
+    if (depth == keys.size() - 1) {
+      obj.insert(key, QJsonValue::fromVariant(value));
+    } else {
+      obj.insert(key, set(obj.value(key).toObject(), depth + 1));
+    }
+    return obj;
+  };
+  root = set(root, 0);
+
+  QFile out(m_path);
+  if (!out.open(QIODevice::WriteOnly | QIODevice::Truncate)) {
+    return false;
+  }
+  out.write(QJsonDocument(root).toJson(QJsonDocument::Indented));
+  out.close();
+  reload();
+  return true;
 }
 
 void Config::openInEditor() const { QDesktopServices::openUrl(QUrl::fromLocalFile(m_path)); }

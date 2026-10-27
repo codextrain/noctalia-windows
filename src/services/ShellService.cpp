@@ -10,6 +10,7 @@
 #include <QHash>
 #include <QScreen>
 #include <QSet>
+#include <QSysInfo>
 #include <QTimer>
 #include <QUrl>
 
@@ -39,6 +40,18 @@ bool ShellService::isWindows() const {
   return false;
 #endif
 }
+
+QString ShellService::userName() const {
+  QString name = qEnvironmentVariable("USERNAME");
+  if (name.isEmpty()) {
+    name = qEnvironmentVariable("USER");
+  }
+  return name;
+}
+
+QString ShellService::osName() const { return QSysInfo::prettyProductName(); }
+
+QString ShellService::env(const QString& name) const { return qEnvironmentVariable(name.toUtf8().constData()); }
 
 void ShellService::startMenu() const { platform::triggerShellAction(platform::ShellAction::StartMenu); }
 void ShellService::search() const { platform::triggerShellAction(platform::ShellAction::Search); }

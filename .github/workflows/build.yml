@@ -1,3 +1,6 @@
+# Builds noctalia.exe on GitHub's Windows machines, so you don't need Qt or Visual Studio
+# installed. Push the project to a GitHub repo, open the "Actions" tab, and download the
+# "noctalia-win" artifact from the latest run: a ready-to-run folder.
 name: build-windows
 
 on:
