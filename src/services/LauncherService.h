@@ -39,6 +39,11 @@ public:
   Q_INVOKABLE void refreshApps();
   Q_INVOKABLE void resetUsage();
 
+  // Used by the dock: app info by id, and which installed app a window belongs to.
+  Q_INVOKABLE QVariantMap appInfo(const QString& appId) const;
+  QString appForWindow(const QString& windowAppId, const QString& exePath) const;
+  Q_INVOKABLE void launch(const QString& appId);
+
 signals:
   void appsChanged();
   void prefixChanged();

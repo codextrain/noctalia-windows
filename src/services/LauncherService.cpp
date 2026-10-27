@@ -535,3 +535,36 @@ void LauncherService::resetUsage() {
   saveUsage();
   emit usageChanged();
 }
+
+// ── dock helpers ────────────────────────────────────────────────────────────
+
+QVariantMap LauncherService::appInfo(const QString& appId) const {
+  const auto it = m_appIndex.constFind(appId);
+  if (it == m_appIndex.constEnd()) {
+    return {};
+  }
+  const App& a = m_apps[it.value()];
+  return QVariantMap{{"id", a.id}, {"name", a.name}, {"icon", iconUrl("app", a.id)}};
+}
+
+QString LauncherService::appForWindow(const QString& windowAppId, const QString& exePath) const {
+  if (!windowAppId.isEmpty() && m_appIndex.contains(windowAppId)) {
+    return windowAppId;
+  }
+  // Desktop apps: the Start-menu id is usually a path ending with the program's file name.
+  const QString exe = QFileInfo(exePath).fileName().toLower();
+  if (exe.isEmpty()) {
+    return {};
+  }
+  for (const App& a : m_apps) {
+    if (a.id.toLower().endsWith("\\" + exe) || a.id.toLower() == exe) {
+      return a.id;
+    }
+  }
+  return {};
+}
+
+void LauncherService::launch(const QString& appId) {
+  platform::launchApp(appId.toStdWString());
+  recordUsage(appId);
+}

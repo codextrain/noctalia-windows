@@ -20,6 +20,8 @@ class Config : public QObject {
   Q_PROPERTY(QVariantMap location READ location NOTIFY changed)
   Q_PROPERTY(QVariantMap osd READ osd NOTIFY changed)
   Q_PROPERTY(QVariantMap wallpaper READ wallpaper NOTIFY changed)
+  Q_PROPERTY(QVariantMap dock READ dock NOTIFY changed)
+  Q_PROPERTY(QVariantMap desktopWidgets READ desktopWidgets NOTIFY changed)
   Q_PROPERTY(QString path READ path CONSTANT)
   Q_PROPERTY(QString lastError READ lastError NOTIFY changed)
 
@@ -38,6 +40,8 @@ public:
   QVariantMap location() const { return m_data.value("location").toObject().toVariantMap(); }
   QVariantMap osd() const { return m_data.value("osd").toObject().toVariantMap(); }
   QVariantMap wallpaper() const { return m_data.value("wallpaper").toObject().toVariantMap(); }
+  QVariantMap dock() const { return m_data.value("dock").toObject().toVariantMap(); }
+  QVariantMap desktopWidgets() const { return m_data.value("desktop_widgets").toObject().toVariantMap(); }
   QString path() const { return m_path; }
   QString lastError() const { return m_lastError; }
 

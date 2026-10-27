@@ -111,6 +111,34 @@ QJsonObject Config::defaults() {
            {"recursive", true},
            {"automation", QJsonObject{{"enabled", false}, {"interval_seconds", 1800}, {"order", "random"}}},
        }},
+      {"dock",
+       QJsonObject{
+           // Same keys as Noctalia's [dock]. Tip: with the dock on, set windows.autohide_taskbar = true.
+           {"enabled", false},
+           {"position", "bottom"}, // bottom | top
+           {"icon_size", 48},
+           {"item_spacing", 6},
+           {"main_axis_padding", 16},
+           {"cross_axis_padding", 8},
+           {"background_opacity", 0.88},
+           {"radius", 16},
+           {"margin_edge", 8},
+           {"shadow", true},
+           {"show_running", true},
+           {"reserve_space", true},
+           {"magnification", true},
+           {"magnification_scale", 1.45},
+           {"inactive_opacity", 0.85},
+           {"show_instance_count", true},
+           {"launcher_position", "start"}, // none | start | end
+           {"pinned", QJsonArray{}},
+       }},
+      {"desktop_widgets",
+       QJsonObject{
+           {"enabled", false},
+           // Drag them with the mouse; positions are saved here. Types: clock, media, sysmon, weather
+           {"widgets", QJsonArray{QJsonObject{{"type", "clock"}, {"x", 80}, {"y", 120}, {"scale", 1.0}}}},
+       }},
       {"weather",
        QJsonObject{
            {"enabled", true},

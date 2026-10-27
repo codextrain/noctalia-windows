@@ -7,6 +7,8 @@ import "Panels/ControlCenter"
 import "Osd"
 import "Panels/Wallpaper"
 import "Panels/Clipboard"
+import "Dock"
+import "Desktop"
 
 // Entry point: one bar per connected monitor (follows hot-plugging automatically) and the
 // panels, which open on the monitor under the mouse.
@@ -16,6 +18,16 @@ QtObject {
   property Instantiator bars: Instantiator {
     model: Qt.application.screens
     delegate: BarWindow {}
+  }
+
+  property Instantiator docks: Instantiator {
+    model: (Config.dock.enabled ?? false) ? Qt.application.screens : []
+    delegate: DockWindow {}
+  }
+
+  property Instantiator desktopWidgets: Instantiator {
+    model: (Config.desktopWidgets.enabled ?? false) ? (Config.desktopWidgets.widgets ?? []) : []
+    delegate: DesktopWidgetWindow {}
   }
 
   property LauncherPanel launcher: LauncherPanel {}
