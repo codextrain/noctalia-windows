@@ -1,5 +1,7 @@
 #pragma once
 
+#include "core/Worker.h"
+
 #include <QColor>
 #include <QJsonObject>
 #include <QObject>
@@ -8,10 +10,13 @@
 #include <QVariantMap>
 
 class Config;
+class WallpaperService;
 
-// Holds the active color palette. The 10 built-in palettes are copied from Noctalia
-// (assets/palettes.json) and expanded with the same rules as noctalia/src/theme/fixed_palette.cpp,
-// so "surface_container", "primary_container" and friends match the Linux shell.
+// The active color palette, computed with Noctalia's own theme code (third_party/noctalia):
+//   theme.source = "builtin"   -> one of the 10 built-in palettes (theme.builtin)
+//   theme.source = "wallpaper" -> generated from the current wallpaper (theme.wallpaper_scheme:
+//                                 m3-content, m3-tonal-spot, m3-fruit-salad, m3-rainbow,
+//                                 m3-monochrome, vibrant, faithful, soft, dysfunctional, muted)
 //
 // QML: Theme.colors.primary, Theme.colors.surfaceContainerHigh, Theme.dark, ...
 class Theme : public QObject {
@@ -19,30 +24,48 @@ class Theme : public QObject {
   Q_PROPERTY(QVariantMap colors READ colors NOTIFY changed)
   Q_PROPERTY(bool dark READ dark NOTIFY changed)
   Q_PROPERTY(QString palette READ palette NOTIFY changed)
+  Q_PROPERTY(QString source READ source NOTIFY changed)
+  Q_PROPERTY(bool generating READ generating NOTIFY changed)
   Q_PROPERTY(QStringList palettes READ palettes CONSTANT)
+  Q_PROPERTY(QStringList schemes READ schemes CONSTANT)
 
 public:
-  explicit Theme(Config* config, QObject* parent = nullptr);
+  Theme(Config* config, WallpaperService* wallpaper, QObject* parent = nullptr);
 
   QVariantMap colors() const { return m_colors; }
   bool dark() const { return m_dark; }
   QString palette() const { return m_palette; }
+  QString source() const { return m_source; }
+  bool generating() const { return m_generating; }
   QStringList palettes() const { return m_palettes.keys(); }
+  QStringList schemes() const;
 
-  // Expand Noctalia's 16 "fixed palette" colors into the full token set (exposed for tests).
-  static QVariantMap expand(const QJsonObject& fixed, bool dark);
+  // Convenience for QML settings: change and save.
+  Q_INVOKABLE void setBuiltin(const QString& name);
+  Q_INVOKABLE void setMode(const QString& mode);
+  Q_INVOKABLE void useWallpaper(const QString& scheme);
 
 signals:
   void changed();
 
 private:
   void apply();
+  void generateFromWallpaper(const QString& path, const QString& scheme);
+  void publish(const QVariantMap& colors, const QString& name, bool dark);
   bool systemPrefersDark() const;
 
   Config* m_config = nullptr;
+  WallpaperService* m_wallpaper = nullptr;
+  Worker m_worker{"theme"};
   QJsonObject m_palettes;
   QVariantMap m_colors;
   QString m_palette;
+  QString m_source = "builtin";
   bool m_dark = true;
+  bool m_generating = false;
+  // last generated wallpaper palette: both modes, keyed by "path|scheme"
+  QString m_generatedKey;
+  QVariantMap m_generatedDark;
+  QVariantMap m_generatedLight;
   QTimer m_systemPoll; // for theme.mode = "auto"
 };

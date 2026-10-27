@@ -281,6 +281,11 @@ namespace platform {
   std::vector<DisplayInfo> listDisplays();                        // slow (DDC/CI): worker thread
   bool setDisplayBrightness(const std::wstring& id, int percent); // slow (DDC/CI): worker thread
 
+  // ── Wallpaper ────────────────────────────────────────────────────────────
+  std::wstring currentWallpaper(); // path of the wallpaper on the first monitor ("" if none / slideshow)
+  // fillMode: "crop" (fill) | "fit" | "stretch" | "center" | "repeat" (tile) | "span"
+  bool setWallpaper(const std::wstring& path, const std::wstring& fillMode);
+
   // ── Input helpers ────────────────────────────────────────────────────────
   void sendPaste(); // Ctrl+V into the focused window
 

@@ -4,6 +4,8 @@
 #include "platform/Platform.h"
 
 #include <cstdio>
+#include <cstdlib>
+#include <cstring>
 #include <functional>
 
 namespace platform {
@@ -251,4 +253,24 @@ namespace platform {
   }
   bool setDisplayBrightness(const std::wstring&, int) { return true; }
 
+} // namespace platform
+
+// ── wallpaper (stub) ────────────────────────────────────────────────────────
+
+namespace platform {
+  namespace {
+    std::wstring g_wallpaper;
+  }
+  std::wstring currentWallpaper() {
+    if (g_wallpaper.empty()) {
+      if (const char* env = std::getenv("NOCTALIA_STUB_WALLPAPER")) {
+        g_wallpaper.assign(env, env + std::strlen(env));
+      }
+    }
+    return g_wallpaper;
+  }
+  bool setWallpaper(const std::wstring& path, const std::wstring&) {
+    g_wallpaper = path;
+    return true;
+  }
 } // namespace platform

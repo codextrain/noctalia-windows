@@ -125,6 +125,7 @@ Window {
     "brightness": brightnessComponent,
     "weather": weatherComponent,
     "sysmon": sysmonComponent,
+    "wallpaper": wallpaperComponent,
   })
 
   Component { id: launcherComponent; LauncherWidget {} }
@@ -141,6 +142,7 @@ Window {
   Component { id: brightnessComponent; BrightnessWidget {} }
   Component { id: weatherComponent; WeatherWidget {} }
   Component { id: sysmonComponent; SysmonWidget {} }
+  Component { id: wallpaperComponent; WallpaperWidget {} }
 
   component Section: Row {
     id: section

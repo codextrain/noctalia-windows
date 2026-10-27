@@ -18,3 +18,11 @@ See `assets/fonts/tabler-icons-license.txt`.
 ## Qt (LGPLv3)
 https://www.qt.io — linked dynamically. When you distribute the app, ship the Qt DLLs as
 separate files (windeployqt does this) so users can replace them.
+
+## Noctalia theme generator (MIT) — `third_party/noctalia/`
+Noctalia's palette generation and fixed-palette expansion, copied unchanged (see the README
+in that folder). Copyright (c) 2026 noctalia-dev.
+
+## Material Color Utilities (Apache 2.0) — `third_party/material_color_utilities/`
+https://github.com/material-foundation/material-color-utilities — Copyright Google LLC.
+See `third_party/material_color_utilities/LICENSE`.

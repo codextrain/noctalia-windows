@@ -19,6 +19,7 @@ class Config : public QObject {
   Q_PROPERTY(QVariantMap weather READ weather NOTIFY changed)
   Q_PROPERTY(QVariantMap location READ location NOTIFY changed)
   Q_PROPERTY(QVariantMap osd READ osd NOTIFY changed)
+  Q_PROPERTY(QVariantMap wallpaper READ wallpaper NOTIFY changed)
   Q_PROPERTY(QString path READ path CONSTANT)
   Q_PROPERTY(QString lastError READ lastError NOTIFY changed)
 
@@ -36,6 +37,7 @@ public:
   QVariantMap weather() const { return m_data.value("weather").toObject().toVariantMap(); }
   QVariantMap location() const { return m_data.value("location").toObject().toVariantMap(); }
   QVariantMap osd() const { return m_data.value("osd").toObject().toVariantMap(); }
+  QVariantMap wallpaper() const { return m_data.value("wallpaper").toObject().toVariantMap(); }
   QString path() const { return m_path; }
   QString lastError() const { return m_lastError; }
 

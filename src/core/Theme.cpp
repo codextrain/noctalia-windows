@@ -1,154 +1,97 @@
 #include "core/Theme.h"
 
 #include "core/Config.h"
+#include "services/WallpaperService.h"
+
+// Noctalia's own theme code (third_party/noctalia, MIT)
+#include "render/core/color.h"
+#include "theme/fixed_palette.h"
+#include "theme/palette_generator.h"
+#include "theme/scheme.h"
 
 #include <QFile>
+#include <QFileInfo>
 #include <QGuiApplication>
+#include <QImage>
 #include <QJsonDocument>
 #include <QSettings>
 #include <QStyleHints>
 
-#include <algorithm>
-#include <cmath>
-
 namespace {
 
-  // ── small color helpers (ported from noctalia/src/theme) ───────────────────
+  namespace nt = noctalia::theme;
 
-  QColor fromHsl(double h, double s, double l) {
-    // Noctalia's HSL hue is in degrees 0..360; QColor wants 0..1 (or -1 for achromatic).
-    return QColor::fromHslF(static_cast<float>(std::fmod(h + 360.0, 360.0) / 360.0),
-                            static_cast<float>(std::clamp(s, 0.0, 1.0)),
-                            static_cast<float>(std::clamp(l, 0.0, 1.0)));
-  }
-
-  struct Hsl {
-    double h, s, l;
-  };
-
-  Hsl toHsl(const QColor& c) {
-    float h = 0, s = 0, l = 0;
-    c.getHslF(&h, &s, &l);
-    return {h < 0 ? 0.0 : h * 360.0, s, l};
-  }
-
-  QColor mix(const QColor& a, const QColor& b, double t) {
-    auto m = [t](int x, int y) { return static_cast<int>(x + (y - x) * t); };
-    return QColor(m(a.red(), b.red()), m(a.green(), b.green()), m(a.blue(), b.blue()));
-  }
-
-  double luminance(const QColor& c) {
-    auto lin = [](int v) {
-      const double n = v / 255.0;
-      return n <= 0.04045 ? n / 12.92 : std::pow((n + 0.055) / 1.055, 2.4);
-    };
-    return 0.2126 * lin(c.red()) + 0.7152 * lin(c.green()) + 0.0722 * lin(c.blue());
-  }
-
-  double contrast(const QColor& a, const QColor& b) {
-    const double la = luminance(a), lb = luminance(b);
-    return (std::max(la, lb) + 0.05) / (std::min(la, lb) + 0.05);
-  }
-
-  // Nudge `fg` lighter or darker (keeping hue/saturation) until it reaches `ratio` against `bg`.
-  // Simplified version of noctalia's OKLCH-based ensureContrast.
-  QColor ensureContrast(const QColor& fg, const QColor& bg, double ratio) {
-    if (contrast(fg, bg) >= ratio) {
-      return fg;
-    }
-    const Hsl hsl = toHsl(fg);
-    const bool goLighter = luminance(bg) < 0.5;
-    for (int step = 1; step <= 100; ++step) {
-      const double l = goLighter ? hsl.l + (1.0 - hsl.l) * step / 100.0 : hsl.l * (1.0 - step / 100.0);
-      const QColor c = fromHsl(hsl.h, hsl.s, l);
-      if (contrast(c, bg) >= ratio) {
-        return c;
+  // "surface_container_high" -> "surfaceContainerHigh" (the names QML uses)
+  QString camel(const std::string& token) {
+    QString out;
+    bool upper = false;
+    for (const char c : token) {
+      if (c == '_') {
+        upper = true;
+      } else {
+        out += upper ? QChar(c).toUpper() : QChar(c);
+        upper = false;
       }
     }
-    return goLighter ? QColor(Qt::white) : QColor(Qt::black);
+    return out;
   }
 
-  QColor hex(const QJsonObject& o, const char* key, const QColor& fallback = QColor("#ff00ff")) {
-    const QColor c(o.value(QLatin1String(key)).toString());
-    return c.isValid() ? c : fallback;
+  QVariantMap toColors(const nt::TokenMap& tokens) {
+    QVariantMap out;
+    for (const auto& [key, argb] : tokens) {
+      out.insert(camel(key), QColor::fromRgb(static_cast<QRgb>(argb | 0xFF000000u)));
+    }
+    return out;
   }
+
+  ::Color hexColor(const QJsonObject& o, const char* key) {
+    const QColor c(o.value(QLatin1String(key)).toString());
+    if (!c.isValid()) {
+      return rgba(1, 0, 1);
+    }
+    return rgba(static_cast<float>(c.redF()), static_cast<float>(c.greenF()), static_cast<float>(c.blueF()));
+  }
+
+  nt::FixedPalette fixedFromJson(const QJsonObject& p) {
+    nt::FixedPalette f;
+    f.primary = hexColor(p, "primary");
+    f.onPrimary = hexColor(p, "onPrimary");
+    f.secondary = hexColor(p, "secondary");
+    f.onSecondary = hexColor(p, "onSecondary");
+    f.tertiary = hexColor(p, "tertiary");
+    f.onTertiary = hexColor(p, "onTertiary");
+    f.error = hexColor(p, "error");
+    f.onError = hexColor(p, "onError");
+    f.surface = hexColor(p, "surface");
+    f.onSurface = hexColor(p, "onSurface");
+    f.surfaceVariant = hexColor(p, "surfaceVariant");
+    f.onSurfaceVariant = hexColor(p, "onSurfaceVariant");
+    f.outline = hexColor(p, "outline");
+    f.shadow = hexColor(p, "shadow");
+    f.hover = p.contains("hover") ? hexColor(p, "hover") : f.tertiary;
+    f.onHover = p.contains("onHover") ? hexColor(p, "onHover") : f.onTertiary;
+    return f;
+  }
+
+  struct Generated {
+    bool ok = false;
+    QString error;
+    QVariantMap dark;
+    QVariantMap light;
+  };
 
 } // namespace
 
-QVariantMap Theme::expand(const QJsonObject& p, bool isDark) {
-  const QColor primary = hex(p, "primary"), onPrimary = hex(p, "onPrimary");
-  const QColor secondary = hex(p, "secondary"), onSecondary = hex(p, "onSecondary");
-  const QColor tertiary = hex(p, "tertiary"), onTertiary = hex(p, "onTertiary");
-  const QColor error = hex(p, "error"), onError = hex(p, "onError");
-  const QColor surface = hex(p, "surface"), onSurface = hex(p, "onSurface");
-  const QColor surfaceVariant = hex(p, "surfaceVariant"), onSurfaceVariant = hex(p, "onSurfaceVariant");
-  const QColor outlineRaw = hex(p, "outline"), shadow = hex(p, "shadow");
-  const QColor hover = hex(p, "hover", tertiary), onHover = hex(p, "onHover", onTertiary);
-
-  // A container is the accent mixed into the surface (keeps a pastel a pastel).
-  auto container = [&](const QColor& accent) { return mix(surface, accent, 0.30); };
-  const QColor primaryContainer = container(primary);
-  const QColor secondaryContainer = container(secondary);
-  const QColor tertiaryContainer = container(tertiary);
-  const QColor errorContainer = container(error);
-
-  const Hsl sv = toHsl(surfaceVariant);
-  const Hsl s = toHsl(surface);
-  const QColor surfaceContainer = surfaceVariant;
-  const QColor surfaceContainerLowest = mix(surface, surfaceVariant, 0.2);
-  const QColor surfaceContainerLow = mix(surface, surfaceVariant, 0.5);
-  const QColor surfaceContainerHigh =
-      isDark ? fromHsl(sv.h, sv.s, std::min(sv.l + 0.04, 0.40)) : fromHsl(sv.h, sv.s, std::max(sv.l - 0.04, 0.60));
-  const QColor surfaceContainerHighest =
-      isDark ? fromHsl(sv.h, sv.s, std::min(sv.l + 0.08, 0.45)) : fromHsl(sv.h, sv.s, std::max(sv.l - 0.08, 0.55));
-  const QColor surfaceDim =
-      isDark ? fromHsl(s.h, s.s, std::max(s.l - 0.04, 0.02)) : fromHsl(sv.h, sv.s, std::max(sv.l - 0.12, 0.50));
-  const QColor surfaceBright =
-      isDark ? fromHsl(sv.h, sv.s, std::min(sv.l + 0.12, 0.50)) : fromHsl(s.h, s.s, std::min(s.l + 0.03, 0.98));
-
-  return QVariantMap{
-      {"primary", primary},
-      {"onPrimary", onPrimary},
-      {"primaryContainer", primaryContainer},
-      {"onPrimaryContainer", ensureContrast(primary, primaryContainer, 4.5)},
-      {"secondary", secondary},
-      {"onSecondary", onSecondary},
-      {"secondaryContainer", secondaryContainer},
-      {"onSecondaryContainer", ensureContrast(secondary, secondaryContainer, 4.5)},
-      {"tertiary", tertiary},
-      {"onTertiary", onTertiary},
-      {"tertiaryContainer", tertiaryContainer},
-      {"onTertiaryContainer", ensureContrast(tertiary, tertiaryContainer, 4.5)},
-      {"error", error},
-      {"onError", onError},
-      {"errorContainer", errorContainer},
-      {"onErrorContainer", ensureContrast(error, errorContainer, 4.5)},
-      {"surface", surface},
-      {"onSurface", onSurface},
-      {"surfaceVariant", surfaceVariant},
-      {"onSurfaceVariant", onSurfaceVariant},
-      {"surfaceDim", surfaceDim},
-      {"surfaceBright", surfaceBright},
-      {"surfaceContainerLowest", surfaceContainerLowest},
-      {"surfaceContainerLow", surfaceContainerLow},
-      {"surfaceContainer", surfaceContainer},
-      {"surfaceContainerHigh", surfaceContainerHigh},
-      {"surfaceContainerHighest", surfaceContainerHighest},
-      {"outline", ensureContrast(outlineRaw, surface, 3.0)},
-      {"outlineVariant", outlineRaw},
-      {"shadow", shadow},
-      {"hover", hover},
-      {"onHover", onHover},
-      {"scrim", QColor(Qt::black)},
-  };
-}
-
-Theme::Theme(Config* config, QObject* parent) : QObject(parent), m_config(config) {
+Theme::Theme(Config* config, WallpaperService* wallpaper, QObject* parent)
+    : QObject(parent), m_config(config), m_wallpaper(wallpaper) {
   QFile f(":/assets/palettes.json");
   if (f.open(QIODevice::ReadOnly)) {
     m_palettes = QJsonDocument::fromJson(f.readAll()).object();
   }
   connect(m_config, &Config::changed, this, &Theme::apply);
+  if (m_wallpaper != nullptr) {
+    connect(m_wallpaper, &WallpaperService::currentChanged, this, &Theme::apply);
+  }
 
   // theme.mode = "auto" follows Windows' "app mode" (Settings > Personalization > Colors).
   m_systemPoll.setInterval(2000);
@@ -158,6 +101,14 @@ Theme::Theme(Config* config, QObject* parent) : QObject(parent), m_config(config
     }
   });
   apply();
+}
+
+QStringList Theme::schemes() const {
+  QStringList out;
+  for (const auto& name : nt::kSchemeNames) {
+    out.append(QString::fromLatin1(name.data(), static_cast<qsizetype>(name.size())));
+  }
+  return out;
 }
 
 bool Theme::systemPrefersDark() const {
@@ -174,14 +125,19 @@ bool Theme::systemPrefersDark() const {
 #endif
 }
 
+void Theme::publish(const QVariantMap& colors, const QString& name, bool isDark) {
+  if (colors.isEmpty() || (colors == m_colors && name == m_palette && isDark == m_dark)) {
+    return;
+  }
+  m_colors = colors;
+  m_palette = name;
+  m_dark = isDark;
+  emit changed();
+}
+
 void Theme::apply() {
   const QVariantMap cfg = m_config->theme();
   const QString mode = cfg.value("mode", "dark").toString();
-  QString name = cfg.value("builtin", "Noctalia").toString();
-  if (!m_palettes.contains(name)) {
-    name = "Noctalia";
-  }
-
   const bool isDark = mode == "auto" ? systemPrefersDark() : mode != "light";
   if (mode == "auto") {
     m_systemPoll.start();
@@ -189,13 +145,95 @@ void Theme::apply() {
     m_systemPoll.stop();
   }
 
+  m_source = cfg.value("source", "builtin").toString();
+  if (m_source == "wallpaper" && m_wallpaper != nullptr && !m_wallpaper->current().isEmpty()) {
+    const QString scheme = cfg.value("wallpaper_scheme", "m3-content").toString();
+    const QString path = m_wallpaper->current();
+    const QString key = path + '|' + QFileInfo(path).lastModified().toString(Qt::ISODate) + '|' + scheme;
+    if (key == m_generatedKey && !m_generatedDark.isEmpty()) {
+      publish(isDark ? m_generatedDark : m_generatedLight, QStringLiteral("Papel de parede"), isDark);
+      return;
+    }
+    generateFromWallpaper(path, scheme);
+    if (!m_colors.isEmpty()) {
+      return; // keep the current colors until the new ones are ready
+    }
+  }
+
+  // builtin palette (also the fallback while the wallpaper palette is being generated)
+  QString name = cfg.value("builtin", "Noctalia").toString();
+  if (!m_palettes.contains(name)) {
+    name = "Noctalia";
+  }
   const QJsonObject pal = m_palettes.value(name).toObject().value(isDark ? "dark" : "light").toObject();
-  QVariantMap colors = expand(pal, isDark);
-  if (colors == m_colors && name == m_palette && isDark == m_dark) {
+  publish(toColors(nt::expandFixedPaletteMode(fixedFromJson(pal), isDark)), name, isDark);
+}
+
+void Theme::generateFromWallpaper(const QString& path, const QString& schemeName) {
+  const QString key = path + '|' + QFileInfo(path).lastModified().toString(Qt::ISODate) + '|' + schemeName;
+  if (m_generating && key == m_generatedKey) {
     return;
   }
-  m_colors = std::move(colors);
-  m_palette = name;
-  m_dark = isDark;
+  m_generatedKey = key;
+  m_generating = true;
   emit changed();
+
+  m_worker.run(
+      [path, schemeName] {
+        Generated g;
+        QImage img(path);
+        if (img.isNull()) {
+          g.error = QStringLiteral("Não foi possível abrir o papel de parede");
+          return g;
+        }
+        // Noctalia samples a 112x112 RGB thumbnail.
+        img = img.scaled(112, 112, Qt::IgnoreAspectRatio, Qt::SmoothTransformation).convertToFormat(QImage::Format_RGB888);
+        std::vector<uint8_t> rgb(112 * 112 * 3);
+        for (int y = 0; y < 112; ++y) {
+          memcpy(rgb.data() + y * 112 * 3, img.constScanLine(y), 112 * 3);
+        }
+        const auto scheme = nt::schemeFromString(schemeName.toStdString()).value_or(nt::Scheme::Content);
+        auto result = nt::generate(rgb, scheme);
+        if (!result) {
+          g.error = QString::fromStdString(result.error());
+          return g;
+        }
+        nt::GeneratedPalette palette = std::move(*result);
+        nt::setGeneratedHoverTokens(palette);
+        g.dark = toColors(palette.dark);
+        g.light = toColors(palette.light);
+        g.ok = true;
+        return g;
+      },
+      this,
+      [this, key](Generated g) {
+        if (key != m_generatedKey) {
+          return; // a newer request is running
+        }
+        m_generating = false;
+        if (!g.ok) {
+          qWarning("noctalia-win: %s", qPrintable(g.error));
+          m_generatedKey.clear();
+          emit changed();
+          return;
+        }
+        m_generatedDark = g.dark;
+        m_generatedLight = g.light;
+        const QString mode = m_config->theme().value("mode", "dark").toString();
+        const bool isDark = mode == "auto" ? systemPrefersDark() : mode != "light";
+        publish(isDark ? m_generatedDark : m_generatedLight, QStringLiteral("Papel de parede"), isDark);
+        emit changed();
+      });
+}
+
+void Theme::setBuiltin(const QString& name) {
+  m_config->setValue("theme.source", "builtin");
+  m_config->setValue("theme.builtin", name);
+}
+
+void Theme::setMode(const QString& mode) { m_config->setValue("theme.mode", mode); }
+
+void Theme::useWallpaper(const QString& scheme) {
+  m_config->setValue("theme.wallpaper_scheme", scheme.isEmpty() ? QStringLiteral("m3-content") : scheme);
+  m_config->setValue("theme.source", "wallpaper");
 }

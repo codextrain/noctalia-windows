@@ -55,6 +55,9 @@ QJsonObject Config::defaults() {
       {"theme",
        QJsonObject{
            {"mode", "dark"},        // dark | light | auto (follows Windows)
+           {"source", "builtin"},   // builtin | wallpaper (Material You from the wallpaper)
+           {"wallpaper_scheme", "m3-content"}, // m3-content | m3-tonal-spot | m3-fruit-salad | m3-rainbow |
+                                               // m3-monochrome | vibrant | faithful | soft | dysfunctional | muted
            {"builtin", "Noctalia"}, // Ayu | Catppuccin | Dracula | Eldritch | Gruvbox | Kanagawa |
                                     // Noctalia | Nord | Rosé Pine | Tokyo-Night
        }},
@@ -72,7 +75,7 @@ QJsonObject Config::defaults() {
            {"shadow", true},
            {"reserve_space", true},
            {"capsule", false},
-           {"start", QJsonArray{"launcher", "workspaces"}},
+           {"start", QJsonArray{"launcher", "wallpaper", "workspaces"}},
            {"center", QJsonArray{"clock"}},
            // Same order as Noctalia's default (widgets not ported yet are skipped).
            {"end", QJsonArray{"media", "notifications", "network", "bluetooth", "volume", "brightness", "battery", "control-center", "session"}},
@@ -99,6 +102,13 @@ QJsonObject Config::defaults() {
            {"clipboard", ""},
            {"wallpaper", ""},
        }},
+      {"wallpaper",
+       QJsonObject{
+           {"directory", ""},      // empty = Pictures\Wallpapers (or Pictures)
+           {"fill_mode", "crop"},  // crop | fit | stretch | center | repeat | span
+           {"recursive", true},
+           {"automation", QJsonObject{{"enabled", false}, {"interval_seconds", 1800}, {"order", "random"}}},
+       }},
       {"weather",
        QJsonObject{
            {"enabled", true},
@@ -112,9 +122,15 @@ QJsonObject Config::defaults() {
        }},
       {"osd",
        QJsonObject{
-           {"enabled", true},       // Noctalia's volume / brightness popup
-           {"position", "bottom"},  // top | bottom
-           {"timeout_ms", 1500},
+           // Same keys as Noctalia's [osd].
+           {"enabled", true},
+           {"position", "top_right"}, // top_right | top_left | top_center | bottom_right | bottom_left | bottom_center
+           {"hide_delay_ms", 1400},
+           {"background_opacity", 0.97},
+           {"border", true},
+           {"offset_x", 20},
+           {"offset_y", 8},
+           {"kinds", QJsonObject{{"volume_output", true}, {"volume_input", true}, {"brightness", true}, {"wifi", true}, {"bluetooth", true}}},
        }},
       {"windows",
        QJsonObject{

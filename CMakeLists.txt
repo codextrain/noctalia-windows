@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 3.21)
 
 project(NoctaliaWin VERSION 0.1.0 LANGUAGES CXX)
 
-set(CMAKE_CXX_STANDARD 20)
+set(CMAKE_CXX_STANDARD 23)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 # Qt 6.5+ recommended on Windows. (6.4 also builds; used for the Linux preview build.)
@@ -25,6 +25,7 @@ set(SOURCES
     src/core/Worker.h
     src/services/DeviceServices.cpp src/services/DeviceServices.h
     src/services/WeatherService.cpp src/services/WeatherService.h
+    src/services/WallpaperService.cpp src/services/WallpaperService.h
     src/platform/Platform.h
 )
 
@@ -40,6 +41,7 @@ if(WIN32)
       src/platform/win/WinSystem.cpp
       src/platform/win/WinWifi.cpp
       src/platform/win/WinDisplays.cpp
+      src/platform/win/WinWallpaper.cpp
       src/platform/win/WinWindowUtil.h
       src/platform/win/WinInput.h
   )
@@ -52,6 +54,20 @@ if(WIN32)
 else()
   # Fake data so the UI can be developed and previewed on Linux/macOS.
   list(APPEND SOURCES src/platform/stub/PlatformStub.cpp)
+endif()
+
+# Noctalia's palette generator (Material You from the wallpaper + fixed palettes), unchanged.
+file(GLOB NOCTALIA_THEME_SOURCES CONFIGURE_DEPENDS
+    third_party/noctalia/theme/*.cpp
+    third_party/noctalia/render/core/color.cpp
+    third_party/material_color_utilities/cpp/*/*.cc)
+add_library(noctalia_theme STATIC ${NOCTALIA_THEME_SOURCES})
+target_compile_features(noctalia_theme PUBLIC cxx_std_23)
+target_include_directories(noctalia_theme PUBLIC third_party/noctalia third_party/material_color_utilities)
+if(MSVC)
+  target_compile_options(noctalia_theme PRIVATE /W0 /utf-8 /permissive-)
+else()
+  target_compile_options(noctalia_theme PRIVATE -w)
 endif()
 
 qt_add_executable(noctalia-win WIN32 ${SOURCES})
@@ -75,7 +91,7 @@ qt_add_resources(noctalia-win "assets"
         assets/fonts/noctalia-tabler.ttf
 )
 
-target_link_libraries(noctalia-win PRIVATE Qt6::Core Qt6::Gui Qt6::Qml Qt6::Quick Qt6::Network)
+target_link_libraries(noctalia-win PRIVATE Qt6::Core Qt6::Gui Qt6::Qml Qt6::Quick Qt6::Network noctalia_theme)
 
 if(WIN32)
   target_compile_definitions(noctalia-win PRIVATE UNICODE _UNICODE NOMINMAX WIN32_LEAN_AND_MEAN)

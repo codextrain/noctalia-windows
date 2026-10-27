@@ -6,6 +6,7 @@
 #include "platform/Platform.h"
 #include "services/AudioService.h"
 #include "services/DeviceServices.h"
+#include "services/WallpaperService.h"
 #include "services/WeatherService.h"
 #include "services/IconProvider.h"
 #include "services/LauncherService.h"
@@ -87,7 +88,8 @@ int main(int argc, char* argv[]) {
   platform::initialize();
 
   Config config;
-  Theme theme(&config);
+  WallpaperService wallpaper(&config);
+  Theme theme(&config, &wallpaper);
   Glyphs glyphs;
   ShellService shell(&config);
   AudioService audio;
@@ -118,6 +120,7 @@ int main(int argc, char* argv[]) {
   qmlRegisterSingletonInstance("Noctalia", 1, 0, "Wifi", &wifi);
   qmlRegisterSingletonInstance("Noctalia", 1, 0, "Brightness", &brightness);
   qmlRegisterSingletonInstance("Noctalia", 1, 0, "Weather", &weather);
+  qmlRegisterSingletonInstance("Noctalia", 1, 0, "Wallpaper", &wallpaper);
   qmlRegisterSingletonInstance("Noctalia", 1, 0, "Panels", &panels);
   qmlRegisterSingletonInstance("Noctalia", 1, 0, "Launcher", &launcher);
   qmlRegisterType<AppBarItem>("Noctalia", 1, 0, "AppBar");
