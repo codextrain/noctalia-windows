@@ -10,6 +10,7 @@
 #include "theme/scheme.h"
 
 #include <QFile>
+#include <cstring>
 #include <QFileInfo>
 #include <QGuiApplication>
 #include <QImage>

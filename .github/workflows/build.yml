@@ -27,7 +27,15 @@ jobs:
         run: cmake -S . -B build -G Ninja -DCMAKE_BUILD_TYPE=Release
 
       - name: Build
-        run: cmake --build build
+        shell: pwsh
+        run: |
+          cmake --build build 2>&1 | Tee-Object -FilePath build.log
+          if ($LASTEXITCODE -ne 0) {
+            # Surface compiler errors as annotations (readable without downloading the logs).
+            Select-String -Path build.log -Pattern ': (fatal )?error' | Select-Object -First 40 |
+              ForEach-Object { Write-Output ("::error::" + $_.Line.Trim()) }
+            exit 1
+          }
 
       - name: Bundle Qt runtime
         shell: pwsh
