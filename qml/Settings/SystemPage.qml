@@ -9,7 +9,7 @@ Column {
   SettingSection {
     title: "Windows"
     SettingRow {
-      label: "Tecla Win abre o lançador do Noctalia"
+      label: "Tecla Win abre o lançador do Vitória Shell"
       description: "Win sozinha substitui o menu Iniciar. Desative para voltar ao comportamento do Windows. Alt + Espaço continua funcionando."
       NToggle { checked: Config.windows.win_opens_launcher ?? false; onToggled: on => Config.setValue("windows.win_opens_launcher", on) }
     }
@@ -70,7 +70,7 @@ Column {
   SettingSection {
     title: "Sobre"
     SettingRow {
-      label: "Noctalia para Windows " + Shell.version
+      label: "Vitória Shell " + Shell.version
       description: "Port não oficial do Noctalia (noctalia.dev), MIT. Ícones Tabler. " + Shell.osName
       NIconButton { icon: "external-link"; onClicked: Shell.openUri("https://github.com/codextrain/noctalia-windows") }
     }

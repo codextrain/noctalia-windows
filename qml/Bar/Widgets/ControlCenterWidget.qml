@@ -10,5 +10,5 @@ BarWidget {
   onClicked: Panels.toggle("control-center")
   onRightClicked: if (bar) bar.openShellMenu(root)
 
-  NGlyph { icon: "noctalia"; color: root.foreground }
+  NGlyph { icon: "vitoria-cat"; color: root.foreground }
 }

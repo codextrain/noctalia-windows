@@ -181,7 +181,7 @@ QJsonObject Config::defaults() {
            {"border_enabled", true},
            {"layout_animation_enabled", true},
            {"alt_click_spotlight_enabled", true},
-           {"win_drag_enabled", true},
+           {"win_drag_enabled", false},
            {"blur_enabled", false},
            {"blur_intensity_percent", 50},
            {"autohide_taskbar", false},   // auto-hide the Windows taskbar while the shell runs

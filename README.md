@@ -1,6 +1,6 @@
-# Noctalia para Windows
+# Vitória Shell
 
-Port não oficial do [Noctalia](https://noctalia.dev) (desktop shell do Linux) para o Windows 10/11.
+Vitória Shell é uma personalização e port não oficial do [Noctalia](https://noctalia.dev) (desktop shell do Linux) para o Windows 10/11.
 Mesma cara, mesmas paletas, mesmos ícones e o mesmo gerador de cores do Noctalia, reescrito em
 **Qt 6 + C++ + QML** em cima das APIs do Windows.
 

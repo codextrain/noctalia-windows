@@ -214,7 +214,9 @@ unsafe extern "system" fn mouse(code: i32, w: usize, l: isize) -> isize {
                     window: drag.window,
                     x: event.point.x,
                     y: event.point.y,
-                    moved: drag.moved,
+                    moved: drag.moved
+                        || (event.point.x - drag.start.x).abs() >= 6
+                        || (event.point.y - drag.start.y).abs() >= 6,
                 });
             }
             return true;

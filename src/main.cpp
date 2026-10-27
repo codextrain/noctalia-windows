@@ -1,3 +1,4 @@
+#include <QIcon>
 #include "services/HardwareService.h"
 // Noctalia for Windows — an unofficial port of the Noctalia desktop shell (https://noctalia.dev).
 
@@ -73,7 +74,8 @@ namespace {
 int main(int argc, char* argv[]) {
   QGuiApplication app(argc, argv);
   QGuiApplication::setApplicationName("noctalia-win");
-  QGuiApplication::setApplicationDisplayName("Noctalia");
+  QGuiApplication::setApplicationDisplayName("Vitória Shell");
+  QGuiApplication::setWindowIcon(QIcon(":/assets/vitoria-cat.svg"));
   QGuiApplication::setApplicationVersion(NOCTALIA_WIN_VERSION);
   QGuiApplication::setQuitOnLastWindowClosed(false);
 

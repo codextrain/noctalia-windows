@@ -80,7 +80,7 @@ Item {
           }
           NText {
             width: parent.width
-            text: "Noctalia para Windows " + Shell.version + " · " + Shell.osName
+            text: "Vitória Shell " + Shell.version + " · " + Shell.osName
             font.pixelSize: Style.fontSizeCaption
             font.weight: Font.Normal
             color: Theme.colors.onSurfaceVariant

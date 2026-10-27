@@ -31,7 +31,7 @@ pub fn decorations(path: &Path) -> Result<Decorations, String> {
         win_drag: root
             .pointer("/windows/win_drag_enabled")
             .and_then(|v| v.as_bool())
-            .unwrap_or(true),
+            .unwrap_or(false),
         hide_taskbar: root
             .pointer("/windows/hide_taskbar_permanently")
             .and_then(|v| v.as_bool())

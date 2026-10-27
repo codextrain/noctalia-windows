@@ -94,6 +94,7 @@ qt_add_resources(noctalia-win "assets"
         assets/glyphs.json
         assets/emoji.json
         assets/noctalia.svg
+        assets/vitoria-cat.svg
         assets/fonts/noctalia-tabler.ttf
 )
 

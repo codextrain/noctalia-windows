@@ -5,6 +5,26 @@ use std::ffi::c_void;
 pub type Handle = isize;
 #[repr(C)]
 #[derive(Default)]
+struct GuiThreadInfo {
+    size: u32,
+    flags: u32,
+    active: Handle,
+    focus: Handle,
+    capture: Handle,
+    menu_owner: Handle,
+    move_size: Handle,
+    caret: Handle,
+    caret_rect: R,
+}
+pub fn native_move_active() -> bool {
+    let mut info = GuiThreadInfo {
+        size: std::mem::size_of::<GuiThreadInfo>() as u32,
+        ..Default::default()
+    };
+    unsafe { GetGUIThreadInfo(0, &mut info) != 0 && info.flags & 2 != 0 }
+}
+#[repr(C)]
+#[derive(Default)]
 pub struct Placement {
     pub length: u32,
     pub flags: u32,
@@ -68,6 +88,7 @@ pub struct Msg {
 }
 #[link(name = "user32")]
 extern "system" {
+    fn GetGUIThreadInfo(thread: u32, info: *mut GuiThreadInfo) -> i32;
     pub fn GetWindowPlacement(h: Handle, placement: *mut Placement) -> i32;
     pub fn OpenProcess(access: u32, inherit: i32, pid: u32) -> Handle;
     pub fn QueryFullProcessImageNameW(

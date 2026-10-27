@@ -27,7 +27,7 @@ Window {
     Panels.focusWindow(win);
   }
 
-  title: "Configurações do Noctalia"
+  title: "Configurações do Vitória Shell"
   objectName: "settings"
   flags: Qt.Window | Qt.FramelessWindowHint
   color: "transparent"
@@ -70,7 +70,7 @@ Window {
         anchors.leftMargin: Style.panelPadding
         anchors.verticalCenter: parent.verticalCenter
         spacing: Style.spaceSm
-        NGlyph { icon: "noctalia"; size: 20; color: Theme.colors.primary; anchors.verticalCenter: parent.verticalCenter }
+        NGlyph { icon: "vitoria-cat"; size: 20; color: Theme.colors.primary; anchors.verticalCenter: parent.verticalCenter }
         NText { text: "Configurações"; font.pixelSize: Style.fontSizeTitle; font.weight: Font.Bold; anchors.verticalCenter: parent.verticalCenter }
       }
       Row {

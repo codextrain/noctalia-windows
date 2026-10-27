@@ -751,7 +751,7 @@ pub fn main() -> Result<(), String> {
                         }
                     }
                     for m in &ms {
-                        if mouse.dragging().is_some() {
+                        if mouse.dragging().is_some() || native_move_active() {
                             continue;
                         }
                         // Do not rearrange anything on a monitor with a fullscreen/maximized app.
