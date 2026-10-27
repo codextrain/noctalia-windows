@@ -50,7 +50,7 @@ Window {
     height: content.implicitHeight
     scale: w.widgetScale
     radius: Style.radiusXl * 1.5
-    color: Style.alpha(Theme.colors.surface, 0.8)
+    color: Style.glassColor(Theme.colors.surface, 0.8)
     border.width: Style.borderWidth
     border.color: Theme.colors.outlineVariant
 

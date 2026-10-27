@@ -49,6 +49,7 @@ public:
   // Change one setting and save it to config.json, e.g. setValue("launcher.pinned", list).
   // Only that key is touched: the rest of the user's file is kept as is.
   Q_INVOKABLE bool setValue(const QString& dottedPath, const QVariant& value);
+  Q_INVOKABLE bool setBarLayoutJson(const QString& json);
   Q_INVOKABLE void openInEditor() const;
   Q_INVOKABLE void openFolder() const;
 

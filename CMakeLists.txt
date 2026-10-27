@@ -78,7 +78,7 @@ qt_add_executable(noctalia-win WIN32 ${SOURCES})
 target_include_directories(noctalia-win PRIVATE src)
 target_compile_definitions(noctalia-win PRIVATE NOCTALIA_WIN_VERSION="${PROJECT_VERSION}")
 
-file(GLOB_RECURSE QML_FILES RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} CONFIGURE_DEPENDS qml/*.qml qml/*/qmldir)
+file(GLOB_RECURSE QML_FILES RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} CONFIGURE_DEPENDS qml/*.qml qml/*.js qml/*/qmldir)
 qt_add_resources(noctalia-win "qml"
     PREFIX "/"
     FILES ${QML_FILES}
@@ -109,3 +109,24 @@ else()
 endif()
 
 install(TARGETS noctalia-win RUNTIME DESTINATION .)
+
+# Optional native GPU reader for the animated bar cat. No administrator/service needed.
+if(WIN32)
+  option(NOCTALIA_BUILD_GPU_HELPER "Build the Rust GPU telemetry helper" ON)
+  find_program(NOCTALIA_CARGO cargo)
+  if(NOCTALIA_BUILD_GPU_HELPER AND NOCTALIA_CARGO)
+    set(NOCTALIA_GPU_BINARY "${CMAKE_CURRENT_BINARY_DIR}/gpu-agent/release/noctalia-gpu.exe")
+    add_custom_target(noctalia-gpu-agent
+      COMMAND "${NOCTALIA_CARGO}" build --release --locked
+        --manifest-path "${CMAKE_CURRENT_SOURCE_DIR}/tools/gpu-agent/Cargo.toml"
+        --target-dir "${CMAKE_CURRENT_BINARY_DIR}/gpu-agent"
+      BYPRODUCTS "${NOCTALIA_GPU_BINARY}"
+      VERBATIM)
+    add_dependencies(noctalia-win noctalia-gpu-agent)
+    add_custom_command(TARGET noctalia-win POST_BUILD
+      COMMAND "${CMAKE_COMMAND}" -E copy_if_different
+        "${NOCTALIA_GPU_BINARY}" "$<TARGET_FILE_DIR:noctalia-win>/noctalia-gpu.exe"
+      VERBATIM)
+    install(PROGRAMS "${NOCTALIA_GPU_BINARY}" DESTINATION .)
+  endif()
+endif()

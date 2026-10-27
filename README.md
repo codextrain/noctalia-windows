@@ -14,6 +14,10 @@ Mesma cara, mesmas paletas, mesmos ícones e o mesmo gerador de cores do Noctali
 
 ## O que tem
 
+As personalizações recentes estão descritas em [docs/personalizacoes.md](docs/personalizacoes.md):
+widgets por arrastar e soltar, correção do desaparecimento da barra, relógio em português,
+gato animado pela GPU, atualização das paletas e integração opcional com o NiriWin.
+
 - **Barra** flutuante em cada monitor, que reserva espaço na tela como a barra de tarefas. Widgets:
   launcher, papel de parede, áreas de trabalho, relógio, mídia, bandeja, notificações, área de
   transferência, rede, Bluetooth, volume, brilho, bateria, clima, monitor do sistema, central de

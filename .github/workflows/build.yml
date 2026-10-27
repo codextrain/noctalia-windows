@@ -23,6 +23,18 @@ jobs:
       - name: Set up MSVC
         uses: ilammy/msvc-dev-cmd@v1
 
+      - uses: dtolnay/rust-toolchain@stable
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+
+      - name: Test widget logic
+        run: node --test tests/*.test.cjs
+
+      - name: Test GPU reader
+        run: cargo test --locked --manifest-path tools/gpu-agent/Cargo.toml
+
       - name: Configure
         run: cmake -S . -B build -G Ninja -DCMAKE_BUILD_TYPE=Release
 
@@ -42,6 +54,7 @@ jobs:
         run: |
           New-Item -ItemType Directory -Force dist | Out-Null
           Copy-Item build/noctalia.exe dist/
+          Copy-Item build/noctalia-gpu.exe dist/
           windeployqt --release --qmldir qml --no-translations --no-system-d3d-compiler --no-opengl-sw dist/noctalia.exe
 
       - uses: actions/upload-artifact@v4

@@ -17,6 +17,7 @@
 #include <QJsonDocument>
 #include <QSettings>
 #include <QStyleHints>
+#include <QDateTime>
 
 namespace {
 
@@ -80,6 +81,11 @@ namespace {
     QVariantMap dark;
     QVariantMap light;
   };
+  QString wallpaperKey(const QString& path, const QString& scheme) {
+    const QFileInfo file(path);
+    return file.absoluteFilePath() + '|' + QString::number(file.lastModified().toMSecsSinceEpoch())
+        + '|' + QString::number(file.size()) + '|' + scheme;
+  }
 
 } // namespace
 
@@ -147,11 +153,17 @@ void Theme::apply() {
   }
 
   m_source = cfg.value("source", "builtin").toString();
+  if ((m_source != "wallpaper" || m_wallpaper == nullptr || m_wallpaper->current().isEmpty()) && m_generating) {
+    ++m_requestSerial;
+    m_pendingKey.clear();
+    m_generating = false;
+  }
   if (m_source == "wallpaper" && m_wallpaper != nullptr && !m_wallpaper->current().isEmpty()) {
     const QString scheme = cfg.value("wallpaper_scheme", "m3-content").toString();
     const QString path = m_wallpaper->current();
-    const QString key = path + '|' + QFileInfo(path).lastModified().toString(Qt::ISODate) + '|' + scheme;
+    const QString key = wallpaperKey(path, scheme);
     if (key == m_generatedKey && !m_generatedDark.isEmpty()) {
+      if (m_generating) { ++m_requestSerial; m_pendingKey.clear(); m_generating = false; }
       publish(isDark ? m_generatedDark : m_generatedLight, QStringLiteral("Papel de parede"), isDark);
       return;
     }
@@ -171,11 +183,13 @@ void Theme::apply() {
 }
 
 void Theme::generateFromWallpaper(const QString& path, const QString& schemeName) {
-  const QString key = path + '|' + QFileInfo(path).lastModified().toString(Qt::ISODate) + '|' + schemeName;
-  if (m_generating && key == m_generatedKey) {
+  const QString key = wallpaperKey(path, schemeName);
+  if (m_generating && key == m_pendingKey) {
     return;
   }
-  m_generatedKey = key;
+  m_pendingKey = key;
+  const quint64 requestSerial = ++m_requestSerial;
+  m_lastError.clear();
   m_generating = true;
   emit changed();
 
@@ -207,19 +221,21 @@ void Theme::generateFromWallpaper(const QString& path, const QString& schemeName
         return g;
       },
       this,
-      [this, key](Generated g) {
-        if (key != m_generatedKey) {
+      [this, key, requestSerial](Generated g) {
+        if (requestSerial != m_requestSerial || m_config->theme().value("source").toString() != "wallpaper") {
           return; // a newer request is running
         }
         m_generating = false;
+        m_pendingKey.clear();
         if (!g.ok) {
           qWarning("noctalia-win: %s", qPrintable(g.error));
-          m_generatedKey.clear();
+          m_lastError = g.error;
           emit changed();
           return;
         }
         m_generatedDark = g.dark;
         m_generatedLight = g.light;
+        m_generatedKey = key;
         const QString mode = m_config->theme().value("mode", "dark").toString();
         const bool isDark = mode == "auto" ? systemPrefersDark() : mode != "light";
         publish(isDark ? m_generatedDark : m_generatedLight, QStringLiteral("Papel de parede"), isDark);
@@ -237,4 +253,13 @@ void Theme::setMode(const QString& mode) { m_config->setValue("theme.mode", mode
 void Theme::useWallpaper(const QString& scheme) {
   m_config->setValue("theme.wallpaper_scheme", scheme.isEmpty() ? QStringLiteral("m3-content") : scheme);
   m_config->setValue("theme.source", "wallpaper");
+}
+
+void Theme::refreshWallpaperPalette() {
+  if (m_config->theme().value("source").toString() != "wallpaper") return;
+  ++m_requestSerial;
+  m_generatedKey.clear();
+  m_pendingKey.clear();
+  m_generating = false;
+  apply();
 }

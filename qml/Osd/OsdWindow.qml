@@ -101,7 +101,7 @@ Window {
     width: osd.cardW
     height: osd.cardH
     radius: height / 2
-    color: Style.alpha(Theme.colors.surface, osd.cfg.background_opacity ?? 0.97)
+    color: Style.glassColor(Theme.colors.surface, osd.cfg.background_opacity ?? 0.97)
     border.width: (osd.cfg.border ?? true) ? Style.borderWidth : 0
     border.color: Theme.colors.outlineVariant
 

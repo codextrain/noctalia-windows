@@ -10,5 +10,5 @@ BarWidget {
   onClicked: Panels.toggle("wallpaper")
   onRightClicked: Wallpaper.random()
 
-  NGlyph { icon: "wallpaper-selector"; color: root.foreground }
+  NGlyph { icon: "alien"; color: root.foreground }
 }

@@ -10,11 +10,13 @@ import "Panels/Clipboard"
 import "Dock"
 import "Desktop"
 import "Settings"
+import "Commons"
 
 // Entry point: one bar per connected monitor (follows hot-plugging automatically) and the
 // panels, which open on the monitor under the mouse.
 QtObject {
   id: root
+  property var wallpaperThemeSync: WallpaperThemeSync
 
   property Instantiator bars: Instantiator {
     model: Qt.application.screens

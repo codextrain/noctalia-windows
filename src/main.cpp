@@ -17,6 +17,9 @@
 #include "services/SystemServices.h"
 
 #include <QDir>
+#include <QFileInfo>
+#include <QProcess>
+#include <QStandardPaths>
 #include <QEventLoop>
 #include <QGuiApplication>
 #include <QLocalSocket>
@@ -88,6 +91,20 @@ int main(int argc, char* argv[]) {
   }
 
   platform::initialize();
+
+  // The GPU cat also works when launching a future native build directly.
+  // External launchers may supply their own reader/state location instead.
+  if (qEnvironmentVariableIsEmpty("NOCTALIA_GPU_STATE")) {
+    const QString helper = QDir(QCoreApplication::applicationDirPath()).filePath("noctalia-gpu.exe");
+    if (QFileInfo::exists(helper)) {
+      const QString directory = QStandardPaths::writableLocation(QStandardPaths::CacheLocation);
+      QDir().mkpath(directory);
+      const QString state = QDir(directory).filePath("gpu-state.json");
+      qputenv("NOCTALIA_GPU_STATE", QUrl::fromLocalFile(state).toEncoded());
+      QProcess::startDetached(helper, {"--parent", QString::number(QCoreApplication::applicationPid()), "--state", state});
+    }
+  }
+  if (qEnvironmentVariableIsEmpty("QML_XHR_ALLOW_FILE_READ")) qputenv("QML_XHR_ALLOW_FILE_READ", "1");
 
   Config config;
   WallpaperService wallpaper(&config);

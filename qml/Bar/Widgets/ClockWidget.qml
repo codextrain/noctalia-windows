@@ -11,10 +11,13 @@ BarWidget {
   property date now: new Date()
   readonly property string timeFormat: Config.shell.time_format ?? "HH:mm"
   readonly property string dateFormat: Config.shell.date_format ?? "dddd, d 'de' MMMM"
+  readonly property var weekdays: ["dom.", "seg.", "ter.", "qua.", "qui.", "sex.", "sáb."]
+  readonly property var months: ["jan.", "fev.", "mar.", "abr.", "mai.", "jun.", "jul.", "ago.", "set.", "out.", "nov.", "dez."]
+  readonly property string displayDate: Qt.formatDateTime(now, timeFormat) + " " + weekdays[now.getDay()] + ", " + now.getDate() + " " + months[now.getMonth()]
 
   tooltipText: {
     const d = now.toLocaleDateString(Qt.locale(), dateFormat);
-    return d.charAt(0).toUpperCase() + d.slice(1);
+    return d.charAt(0).toUpperCase() + d.slice(1) + " · " + Qt.formatDateTime(now, timeFormat);
   }
   onClicked: Panels.toggle("control-center:calendar")
   onRightClicked: Shell.notificationCenter()
@@ -31,7 +34,7 @@ BarWidget {
   }
 
   NText {
-    text: Qt.formatDateTime(root.now, root.timeFormat)
+    text: root.displayDate
     color: root.foreground
     font.pixelSize: Style.fontSizeBody
     font.weight: Font.DemiBold

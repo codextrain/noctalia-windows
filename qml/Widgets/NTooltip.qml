@@ -56,7 +56,7 @@ Window {
   Rectangle {
     anchors.fill: parent
     radius: Style.radiusMd
-    color: Theme.colors.surfaceContainer
+    color: Style.glassColor(Theme.colors.surfaceContainer, 1)
     border.color: Theme.colors.outlineVariant
     border.width: Style.borderWidth
 

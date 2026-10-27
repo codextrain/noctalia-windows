@@ -49,7 +49,7 @@ Window {
   Rectangle {
     anchors.fill: parent
     radius: Style.radiusLg
-    color: Theme.colors.surface
+    color: Style.glassColor(Theme.colors.surface, 1)
     border.color: Theme.colors.outlineVariant
     border.width: Style.borderWidth
 

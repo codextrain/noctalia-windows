@@ -11,6 +11,7 @@
 #include <QStandardPaths>
 #include <QUrl>
 #include <QVariantMap>
+#include <QDateTime>
 
 #include <algorithm>
 
@@ -19,7 +20,7 @@ WallpaperService::WallpaperService(Config* config, QObject* parent) : QObject(pa
     refresh();
     applyAutomation();
   });
-  m_poll.setInterval(4000);
+  m_poll.setInterval(1000);
   connect(&m_poll, &QTimer::timeout, this, &WallpaperService::pollCurrent);
   m_poll.start();
   connect(&m_rotate, &QTimer::timeout, this, [this] {
@@ -62,8 +63,11 @@ QString WallpaperService::directory() const {
 
 void WallpaperService::pollCurrent() {
   const QString path = QString::fromStdWString(platform::currentWallpaper());
-  if (path != m_current) {
+  const QFileInfo file(path);
+  const QString signature = path + '|' + QString::number(file.lastModified().toMSecsSinceEpoch()) + '|' + QString::number(file.size());
+  if (path != m_current || signature != m_currentSignature) {
     m_current = path;
+    m_currentSignature = signature;
     emit currentChanged();
   }
 }
@@ -109,6 +113,8 @@ void WallpaperService::set(const QString& path) {
   const QString mode = m_config->wallpaper().value("fill_mode", "crop").toString();
   if (platform::setWallpaper(QDir::toNativeSeparators(path).toStdWString(), mode.toStdWString())) {
     m_current = QDir::toNativeSeparators(path);
+    const QFileInfo file(m_current);
+    m_currentSignature = m_current + '|' + QString::number(file.lastModified().toMSecsSinceEpoch()) + '|' + QString::number(file.size());
     emit currentChanged();
   }
 }

@@ -4,6 +4,7 @@ import Noctalia
 import "../Commons"
 import "../Widgets"
 import "Widgets"
+import "../Commons/BarLayout.js" as BarLayout
 
 // One floating Noctalia bar per monitor.
 //
@@ -27,6 +28,7 @@ Window {
 
   // ── config ────────────────────────────────────────────────────────────────
   readonly property var cfg: Config.bar
+  readonly property var widgetLayout: BarLayout.read(cfg)
   readonly property bool atTop: cfg.position !== "bottom"
   readonly property int thickness: Math.round((cfg.thickness ?? 34) * Style.uiScale)
   readonly property int marginEdge: cfg.margin_edge ?? 10
@@ -126,6 +128,7 @@ Window {
     "brightness": brightnessComponent,
     "weather": weatherComponent,
     "sysmon": sysmonComponent,
+    "gpu-cat": gpuCatComponent,
     "wallpaper": wallpaperComponent,
     "clipboard": clipboardComponent,
     "tray": trayComponent,
@@ -145,6 +148,7 @@ Window {
   Component { id: brightnessComponent; BrightnessWidget {} }
   Component { id: weatherComponent; WeatherWidget {} }
   Component { id: sysmonComponent; SysmonWidget {} }
+  Component { id: gpuCatComponent; GpuCatWidget {} }
   Component { id: wallpaperComponent; WallpaperWidget {} }
   Component { id: clipboardComponent; ClipboardWidget {} }
   Component { id: trayComponent; TrayWidget {} }
@@ -200,7 +204,7 @@ Window {
       id: background
       anchors.fill: parent
       radius: barWindow.radius
-      color: Style.alpha(Theme.colors.surface, barWindow.backgroundOpacity)
+      color: Style.glassColor(Theme.colors.surface, barWindow.backgroundOpacity)
 
       Behavior on color {
         ColorAnimation { duration: Style.animNormal }
@@ -216,7 +220,7 @@ Window {
 
     Section {
       id: startSection
-      names: barWindow.cfg.start ?? []
+      names: barWindow.widgetLayout.start
       anchors.left: parent.left
       anchors.leftMargin: barWindow.padding - Style.barCapsulePadding
       anchors.verticalCenter: parent.verticalCenter
@@ -224,13 +228,13 @@ Window {
 
     Section {
       id: centerSection
-      names: barWindow.cfg.center ?? []
+      names: barWindow.widgetLayout.center
       anchors.centerIn: parent
     }
 
     Section {
       id: endSection
-      names: barWindow.cfg.end ?? []
+      names: barWindow.widgetLayout.end
       anchors.right: parent.right
       anchors.rightMargin: barWindow.padding - Style.barCapsulePadding
       anchors.verticalCenter: parent.verticalCenter

@@ -9,6 +9,9 @@
 #include <QJsonParseError>
 #include <QStandardPaths>
 #include <QUrl>
+#include <QJSValue>
+#include <QSaveFile>
+#include <QSet>
 
 #include <functional>
 
@@ -20,7 +23,7 @@ namespace {
       const QJsonValue existing = base.value(it.key());
       if (existing.isObject() && it.value().isObject()) {
         base.insert(it.key(), deepMerge(existing.toObject(), it.value().toObject()));
-      } else {
+      } else if (!(existing.isArray() && it.value().isNull())) {
         base.insert(it.key(), it.value());
       }
     }
@@ -77,7 +80,7 @@ QJsonObject Config::defaults() {
            {"shadow", true},
            {"reserve_space", true},
            {"capsule", false},
-           {"start", QJsonArray{"launcher", "wallpaper", "workspaces"}},
+           {"start", QJsonArray{"launcher", "workspaces", "gpu-cat"}},
            {"center", QJsonArray{"clock"}},
            // Same order as Noctalia's default (widgets not ported yet are skipped).
            {"end", QJsonArray{"media", "tray", "notifications", "clipboard", "network", "bluetooth", "volume", "brightness", "battery", "control-center", "session"}},
@@ -164,6 +167,9 @@ QJsonObject Config::defaults() {
        }},
       {"windows",
        QJsonObject{
+           {"corner_rounding_percent", 25}, // NiriWin: 0 = square, 100 = maximum custom radius
+           {"blur_enabled", false},
+           {"blur_intensity_percent", 50},
            {"autohide_taskbar", false},   // auto-hide the Windows taskbar while the shell runs
            {"hide_on_fullscreen", true},  // hide the bar while a game/video is fullscreen
        }},
@@ -228,6 +234,14 @@ void Config::watch() {
 }
 
 bool Config::setValue(const QString& dottedPath, const QVariant& value) {
+  // QML arrays/objects may arrive wrapped in QJSValue inside QVariant.
+  const QVariant normalized = value.metaType() == QMetaType::fromType<QJSValue>()
+      ? value.value<QJSValue>().toVariant() : value;
+  const QJsonValue jsonValue = QJsonValue::fromVariant(normalized);
+  if ((dottedPath == "bar.start" || dottedPath == "bar.center" || dottedPath == "bar.end" ||
+       dottedPath == "desktop_widgets.widgets") && !jsonValue.isArray()) {
+    return false;
+  }
   const QStringList keys = dottedPath.split('.', Qt::SkipEmptyParts);
   if (keys.isEmpty()) {
     return false;
@@ -249,7 +263,7 @@ bool Config::setValue(const QString& dottedPath, const QVariant& value) {
   std::function<QJsonObject(QJsonObject, int)> set = [&](QJsonObject obj, int depth) {
     const QString& key = keys[depth];
     if (depth == keys.size() - 1) {
-      obj.insert(key, QJsonValue::fromVariant(value));
+      obj.insert(key, jsonValue);
     } else {
       obj.insert(key, set(obj.value(key).toObject(), depth + 1));
     }
@@ -257,14 +271,33 @@ bool Config::setValue(const QString& dottedPath, const QVariant& value) {
   };
   root = set(root, 0);
 
-  QFile out(m_path);
-  if (!out.open(QIODevice::WriteOnly | QIODevice::Truncate)) {
+  QSaveFile out(m_path);
+  if (!out.open(QIODevice::WriteOnly)) {
     return false;
   }
-  out.write(QJsonDocument(root).toJson(QJsonDocument::Indented));
-  out.close();
+  const QByteArray bytes = QJsonDocument(root).toJson(QJsonDocument::Indented);
+  if (out.write(bytes) != bytes.size() || !out.commit()) return false;
   reload();
   return true;
+}
+
+bool Config::setBarLayoutJson(const QString& json) {
+  QJsonParseError error{};
+  const auto document = QJsonDocument::fromJson(json.toUtf8(), &error);
+  if (error.error != QJsonParseError::NoError || !document.isObject()) return false;
+  auto bar = m_data.value("bar").toObject();
+  QSet<QString> seen;
+  for (const auto& section : {QStringLiteral("start"), QStringLiteral("center"), QStringLiteral("end")}) {
+    const auto value = document.object().value(section);
+    if (!value.isArray()) return false;
+    for (const auto& entry : value.toArray()) {
+      if (!entry.isString() || entry.toString().isEmpty() || seen.contains(entry.toString())) return false;
+      seen.insert(entry.toString());
+    }
+    bar.insert(section, value);
+  }
+  bar.remove("widget_layout_json");
+  return setValue("bar", bar.toVariantMap());
 }
 
 void Config::openInEditor() const { QDesktopServices::openUrl(QUrl::fromLocalFile(m_path)); }

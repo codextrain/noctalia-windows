@@ -96,7 +96,7 @@ Window {
       anchors.top: dock.atTop ? parent.top : undefined
       anchors.topMargin: dock.atTop ? dock.marginEdge : 0
       radius: Math.min(dock.cfg.radius ?? 16, height / 2) * Style.radiusScale
-      color: Style.alpha(Theme.colors.surface, dock.cfg.background_opacity ?? 0.88)
+      color: Style.glassColor(Theme.colors.surface, dock.cfg.background_opacity ?? 0.88)
       border.width: Style.borderWidth
       border.color: Theme.colors.outlineVariant
 

@@ -4,10 +4,90 @@ import "../Commons"
 import "../Widgets"
 
 Column {
+  id: appearancePage
   spacing: Style.spaceMd
+  readonly property int windowRounding: Config.windows.corner_rounding_percent ?? 25
+  property string roundingError: ""
+  property string blurError: ""
+  function setBlurEnabled(enabled) {
+    const ok=Config.setValue("windows.blur_enabled",enabled);
+    blurError=ok ? "" : "Não foi possível salvar o blur.";
+    return ok;
+  }
+  function setBlurIntensity(value) {
+    const percent=Math.max(0,Math.min(100,Math.round(value)));
+    const ok=Config.setValue("windows.blur_intensity_percent",percent);
+    blurError=ok ? "" : "Não foi possível salvar a intensidade.";
+    return ok;
+  }
+  function setWindowRounding(value) {
+    const percent = Math.max(0, Math.min(100, Math.round(value)));
+    const ok = Config.setValue("windows.corner_rounding_percent", percent);
+    roundingError = ok ? "" : "Não foi possível salvar o arredondamento.";
+    return ok;
+  }
+
+  SettingSection {
+    title: "Janelas dos aplicativos"
+    SettingRow {
+      label: "Blur dos aplicativos compatíveis"
+      description: "O Noctalia fica excluído para evitar margens brancas. Aplicativos com fundo opaco podem não mostrar o efeito."
+      NToggle { checked: Config.windows.blur_enabled ?? false; onToggled: enabled => appearancePage.setBlurEnabled(enabled) }
+    }
+    SettingRow {
+      label: "Intensidade no Noctalia (%)"
+      description: "Indisponível nesta versão: o efeito gerou margens brancas. Os fundos originais foram preservados."
+      NumberBox { enabled:false; opacity:0.45; value: Config.windows.blur_intensity_percent ?? 50; from:0; to:100; step:5; onEdited: value => appearancePage.setBlurIntensity(value) }
+    }
+    NText { width:parent.width; visible:appearancePage.blurError.length>0; text:appearancePage.blurError; wrapMode:Text.WordWrap }
+    SettingRow {
+      label: "Arredondamento das janelas"
+      description: "0% = cantos retos; 100% = máximo. Aplicado pelo NiriWin. Pode alterar a sombra de alguns aplicativos."
+      Column {
+        spacing: 6
+        Row {
+          spacing: 12
+          Rectangle {
+            id: roundingSlider
+            width: 180; height: 32; color: "transparent"
+            readonly property int percent: sliderMouse.pressed ? Math.round(Math.max(0, Math.min(100, sliderMouse.mouseX / width * 100))) : appearancePage.windowRounding
+            Rectangle { anchors.verticalCenter: parent.verticalCenter; width: parent.width; height: 6; radius: 3; color: Theme.colors.outlineVariant }
+            Rectangle { anchors.verticalCenter: parent.verticalCenter; width: parent.width * roundingSlider.percent / 100; height: 6; radius: 3; color: Theme.colors.primary }
+            Rectangle { x: (parent.width - width) * roundingSlider.percent / 100; anchors.verticalCenter: parent.verticalCenter; width: 16; height: 16; radius: 8; color: Theme.colors.primary }
+            MouseArea {
+              id: sliderMouse
+              anchors.fill: parent
+              preventStealing: true
+              cursorShape: Qt.PointingHandCursor
+              onReleased: mouse => appearancePage.setWindowRounding(mouse.x / width * 100)
+              onWheel: event => appearancePage.setWindowRounding(appearancePage.windowRounding + (event.angleDelta.y > 0 ? 1 : -1))
+            }
+          }
+          NText { text: roundingSlider.percent + "%"; width: 38; height: 32; horizontalAlignment: Text.AlignRight }
+          Rectangle { width: 40; height: 32; radius: Math.min(16, roundingSlider.percent * 0.16); color: Theme.colors.primary }
+        }
+        NumberBox { value: appearancePage.windowRounding; from: 0; to: 100; step: 1; onEdited: value => appearancePage.setWindowRounding(value) }
+      }
+    }
+    NText { width: parent.width; visible: appearancePage.roundingError.length > 0; text: appearancePage.roundingError; wrapMode: Text.WordWrap }
+  }
 
   SettingSection {
     title: "Cores"
+    NText {
+      width:parent.width
+      visible:Config.theme.source === "wallpaper"
+      text:WallpaperThemeSync.statusText
+      font.pixelSize:Style.fontSizeCaption
+      color:Theme.colors.onSurfaceVariant
+      wrapMode:Text.WordWrap
+    }
+    SettingRow {
+      visible:Config.theme.source === "wallpaper"
+      label:"Atualizar cores agora"
+      description:"Recalcula a paleta usando a imagem atual."
+      NIconButton { icon:"refresh"; enabled:!Theme.generating; onClicked:WallpaperThemeSync.forceRefresh() }
+    }
     SettingRow {
       label: "Modo"
       description: "Automático segue o modo claro/escuro do Windows."

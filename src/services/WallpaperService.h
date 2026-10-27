@@ -44,6 +44,7 @@ private:
   Config* m_config = nullptr;
   Worker m_worker{"wallpaper"};
   QString m_current;
+  QString m_currentSignature;
   QVariantList m_images;
   QString m_scannedKey;
   bool m_loading = false;

@@ -26,6 +26,7 @@ class Theme : public QObject {
   Q_PROPERTY(QString palette READ palette NOTIFY changed)
   Q_PROPERTY(QString source READ source NOTIFY changed)
   Q_PROPERTY(bool generating READ generating NOTIFY changed)
+  Q_PROPERTY(QString lastError READ lastError NOTIFY changed)
   Q_PROPERTY(QStringList palettes READ palettes CONSTANT)
   Q_PROPERTY(QStringList schemes READ schemes CONSTANT)
 
@@ -37,6 +38,7 @@ public:
   QString palette() const { return m_palette; }
   QString source() const { return m_source; }
   bool generating() const { return m_generating; }
+  QString lastError() const { return m_lastError; }
   QStringList palettes() const { return m_palettes.keys(); }
   QStringList schemes() const;
 
@@ -44,6 +46,7 @@ public:
   Q_INVOKABLE void setBuiltin(const QString& name);
   Q_INVOKABLE void setMode(const QString& mode);
   Q_INVOKABLE void useWallpaper(const QString& scheme);
+  Q_INVOKABLE void refreshWallpaperPalette();
 
 signals:
   void changed();
@@ -65,6 +68,9 @@ private:
   bool m_generating = false;
   // last generated wallpaper palette: both modes, keyed by "path|scheme"
   QString m_generatedKey;
+  QString m_pendingKey;
+  QString m_lastError;
+  quint64 m_requestSerial = 0;
   QVariantMap m_generatedDark;
   QVariantMap m_generatedLight;
   QTimer m_systemPoll; // for theme.mode = "auto"

@@ -5,6 +5,27 @@ import Noctalia
 
 // Design constants copied from noctalia/src/ui/style.h so sizes match the Linux shell.
 QtObject {
+  id: styleRoot
+  property var niriState: ({})
+  property bool readingNiriState: false
+  // The current Qt runtime paints white margins with system acrylic.
+  // Preserve the configured shell backgrounds until a compatible renderer exists.
+  readonly property bool glassActive: false
+  readonly property real glassStrength: Math.max(0,Math.min(100,Config.windows.blur_intensity_percent ?? 50)) / 100
+  function glassColor(color, opacity) { return alpha(color, opacity * (glassActive ? 1 - 0.65 * glassStrength : 1)); }
+  function refreshNiriState() {
+    const url = Shell.env("NOCTALIA_NIRIWIN_STATUS");
+    if (!url.length || readingNiriState) return;
+    readingNiriState = true;
+    const request = new XMLHttpRequest();
+    request.onreadystatechange = function() {
+      if (request.readyState !== XMLHttpRequest.DONE) return;
+      styleRoot.readingNiriState = false;
+      try { styleRoot.niriState = JSON.parse(request.responseText); } catch(e) { styleRoot.niriState = ({}); }
+    };
+    try { request.open("GET",url); request.send(); } catch(e) { readingNiriState=false; niriState=({}); }
+  }
+  property Timer glassPoll: Timer { interval:250; running:true; repeat:true; triggeredOnStart:true; onTriggered: styleRoot.refreshNiriState() }
   readonly property real uiScale: Config.shell.ui_scale ?? 1.0
   readonly property real radiusScale: Config.shell.corner_radius_scale ?? 1.0
 
