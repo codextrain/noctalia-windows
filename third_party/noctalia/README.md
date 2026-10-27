@@ -14,3 +14,4 @@ Copied unchanged from https://github.com/noctalia-dev/noctalia-shell:
 
 `(Vec3){...}` / `(ViewingConditions){...}` compound literals were rewritten as `Vec3{...}` /
 `ViewingConditions{...}` (same meaning; MSVC rejects the C-style form).
+- `ScoreOptions::fallback_color_argb`: explicit cast of 0xff4285f4 to int (MSVC narrowing error).
