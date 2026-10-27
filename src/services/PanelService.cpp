@@ -10,6 +10,56 @@
 #include <QLocalSocket>
 #include <QScreen>
 #include <QTimer>
+#ifdef Q_OS_WIN
+#include <windows.h>
+namespace {
+HHOOK winKeyHook = nullptr, winMouseHook = nullptr;
+PanelService* winPanels = nullptr;
+bool winHeld = false, winCombined = false;
+LRESULT CALLBACK launcherMouse(int code, WPARAM message, LPARAM data) {
+  if (code == HC_ACTION && winHeld && message != WM_MOUSEMOVE)
+    winCombined = true;
+  return CallNextHookEx(nullptr, code, message, data);
+}
+LRESULT CALLBACK launcherKey(int code, WPARAM message, LPARAM data) {
+  if (code != HC_ACTION) return CallNextHookEx(nullptr, code, message, data);
+  const auto* key = reinterpret_cast<KBDLLHOOKSTRUCT*>(data);
+  if (key->flags & LLKHF_INJECTED) return CallNextHookEx(nullptr, code, message, data);
+  const bool isWin = key->vkCode == VK_LWIN || key->vkCode == VK_RWIN;
+  const bool down = message == WM_KEYDOWN || message == WM_SYSKEYDOWN;
+  if (isWin && down && !winHeld) {
+    winHeld = true;
+    winCombined = (GetAsyncKeyState(VK_CONTROL) & 0x8000)
+               || (GetAsyncKeyState(VK_SHIFT) & 0x8000)
+               || (GetAsyncKeyState(VK_MENU) & 0x8000)
+               || (GetAsyncKeyState(VK_LBUTTON) & 0x8000)
+               || (GetAsyncKeyState(VK_RBUTTON) & 0x8000);
+  } else if (!isWin && down && winHeld) {
+    winCombined = true;
+  } else if (isWin && !down && winHeld) {
+    winHeld = false;
+    if (!winCombined && winPanels) {
+      // Mark Win as used before forwarding its release: suppress Start without
+      // swallowing Win down, which would break Windows shortcuts.
+      INPUT mask[2]{};
+      for (auto& input : mask) { input.type = INPUT_KEYBOARD; input.ki.wVk = 0xE8; }
+      mask[1].ki.dwFlags = KEYEVENTF_KEYUP;
+      if (SendInput(2, mask, sizeof(INPUT)) == 2) {
+        QMetaObject::invokeMethod(winPanels, [panel = winPanels] { panel->toggle("launcher"); }, Qt::QueuedConnection);
+      }
+    }
+  }
+  return CallNextHookEx(nullptr, code, message, data);
+}
+void disableWinLauncher() {
+  if (winKeyHook) UnhookWindowsHookEx(winKeyHook);
+  if (winMouseHook) UnhookWindowsHookEx(winMouseHook);
+  winKeyHook = winMouseHook = nullptr;
+  winPanels = nullptr;
+  winHeld = winCombined = false;
+}
+}
+#endif
 
 PanelService::PanelService(Config* config, QObject* parent) : QObject(parent), m_config(config) {
   qApp->installNativeEventFilter(this);
@@ -33,6 +83,9 @@ PanelService::PanelService(Config* config, QObject* parent) : QObject(parent), m
 }
 
 PanelService::~PanelService() {
+#ifdef Q_OS_WIN
+  disableWinLauncher();
+#endif
   unregisterHotkeys();
   if (qApp != nullptr) {
     qApp->removeNativeEventFilter(this);
@@ -133,6 +186,19 @@ void PanelService::unregisterHotkeys() {
 void PanelService::registerHotkeys() {
   unregisterHotkeys();
   m_hotkeyErrors.clear();
+#ifdef Q_OS_WIN
+  const bool useWin = m_config->windows().value("win_opens_launcher").toBool();
+  if (!useWin) disableWinLauncher();
+  else if (!winKeyHook) {
+    winPanels = this;
+    winMouseHook = SetWindowsHookExW(WH_MOUSE_LL, launcherMouse, GetModuleHandleW(nullptr), 0);
+    winKeyHook = SetWindowsHookExW(WH_KEYBOARD_LL, launcherKey, GetModuleHandleW(nullptr), 0);
+    if (!winKeyHook || !winMouseHook) {
+      disableWinLauncher();
+      m_hotkeyErrors.append(QStringLiteral("Não foi possível ativar Win para abrir o lançador."));
+    }
+  }
+#endif
 
   const QVariantMap binds = m_config->keybinds();
   int id = 0x4E01;

@@ -9,6 +9,11 @@ Column {
   SettingSection {
     title: "Windows"
     SettingRow {
+      label: "Tecla Win abre o lançador do Noctalia"
+      description: "Win sozinha substitui o menu Iniciar. Desative para voltar ao comportamento do Windows. Alt + Espaço continua funcionando."
+      NToggle { checked: Config.windows.win_opens_launcher ?? false; onToggled: on => Config.setValue("windows.win_opens_launcher", on) }
+    }
+    SettingRow {
       label: "Iniciar com o Windows"
       NToggle { checked: Shell.autostart; onToggled: on => Shell.autostart = on }
     }
