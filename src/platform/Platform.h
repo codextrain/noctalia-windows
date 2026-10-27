@@ -23,8 +23,9 @@ namespace platform {
     // onChange: volume (0..1) and mute changed. May be called from ANY thread.
     // onDefaultDeviceChanged: default output device changed. May be called from ANY thread;
     //                         the owner should call rebind() on its own thread afterwards.
+    // capture = false: default speakers/headphones; true: default microphone.
     static std::unique_ptr<AudioEndpoint> create(std::function<void(float, bool)> onChange,
-                                                 std::function<void()> onDefaultDeviceChanged);
+                                                 std::function<void()> onDefaultDeviceChanged, bool capture = false);
     virtual ~AudioEndpoint() = default;
 
     virtual bool rebind() = 0; // (re)attach to the current default output device
@@ -36,6 +37,27 @@ namespace platform {
     virtual std::wstring deviceName() const = 0;
   };
 
+  struct AudioDevice {
+    std::wstring id;
+    std::wstring name;
+    bool isDefault = false;
+  };
+  std::vector<AudioDevice> listAudioDevices(bool capture);
+  bool setDefaultAudioDevice(const std::wstring& id); // all roles (console, multimedia, communications)
+
+  // Per-application volume (the Windows "volume mixer").
+  struct AudioSession {
+    std::wstring id; // session instance identifier
+    std::wstring name;
+    std::wstring exePath;
+    float volume = 1.0F;
+    bool muted = false;
+    bool active = false; // currently playing sound
+  };
+  std::vector<AudioSession> listAudioSessions();
+  void setAudioSessionVolume(const std::wstring& id, float volume);
+  void setAudioSessionMuted(const std::wstring& id, bool muted);
+
   // ── Power ────────────────────────────────────────────────────────────────
   struct PowerStatus {
     bool hasBattery = false;
@@ -45,6 +67,26 @@ namespace platform {
     int secondsLeft = -1;  // -1 = unknown
   };
   PowerStatus queryPower();
+
+  struct PowerPlan {
+    std::wstring guid;
+    std::wstring name;
+    bool active = false;
+  };
+  std::vector<PowerPlan> listPowerPlans();
+  bool setPowerPlan(const std::wstring& guid);
+
+  // ── System monitor ───────────────────────────────────────────────────────
+  struct SystemStats {
+    double cpuPercent = 0;          // since the previous call
+    std::uint64_t memTotal = 0;     // bytes
+    std::uint64_t memUsed = 0;
+    std::uint64_t uptimeSeconds = 0;
+    std::uint64_t diskTotal = 0;    // system drive
+    std::uint64_t diskFree = 0;
+    std::wstring computerName;
+  };
+  SystemStats querySystem();
 
   // ── Virtual desktops (Noctalia "workspaces") ─────────────────────────────
   struct DesktopState {
@@ -159,6 +201,85 @@ namespace platform {
   void unregisterHotkey(int id);
   // Pass a native message (Windows: MSG*). Returns the hotkey id, or -1 if it isn't a hotkey.
   int hotkeyFromMessage(const void* nativeMessage);
+
+  // ── Media ("now playing", Windows' system media controls) ────────────────
+  struct MediaState {
+    bool available = false;
+    std::wstring title;
+    std::wstring artist;
+    std::wstring album;
+    std::wstring appId; // AUMID of the player (Spotify, Chrome...)
+    bool playing = false;
+    bool canNext = false;
+    bool canPrevious = false;
+    bool canSeek = false;
+    double position = 0; // seconds, as of `positionTimestampMs`
+    double duration = 0; // seconds (0 = unknown / live)
+    std::int64_t positionTimestampMs = 0;
+    std::uint64_t artVersion = 0;  // bumps when the cover changes
+    std::vector<std::uint8_t> art; // encoded image (PNG/JPEG), may be empty
+  };
+  class MediaController {
+  public:
+    // onChange is called from a worker thread whenever anything changes.
+    static std::unique_ptr<MediaController> create(std::function<void(const MediaState&)> onChange);
+    virtual ~MediaController() = default;
+    virtual void playPause() = 0;
+    virtual void next() = 0;
+    virtual void previous() = 0;
+    virtual void seek(double seconds) = 0;
+  };
+
+  // ── Radios (Wi-Fi / Bluetooth on-off) ────────────────────────────────────
+  enum class RadioKind { WiFi, Bluetooth };
+  struct RadioState {
+    bool present = false;
+    bool on = false;
+  };
+  RadioState queryRadio(RadioKind kind); // may block ~50ms: call from a worker thread
+  bool setRadio(RadioKind kind, bool on);
+
+  // ── Bluetooth devices ────────────────────────────────────────────────────
+  struct BluetoothDevice {
+    std::wstring id;
+    std::wstring name;
+    bool connected = false;
+    std::wstring kind; // "audio", "headset", "mouse", "keyboard", "gamepad", "phone", "computer", ""
+  };
+  std::vector<BluetoothDevice> listBluetoothDevices(); // paired devices; blocking, worker thread
+
+  // ── Wi-Fi ────────────────────────────────────────────────────────────────
+  struct WifiNetwork {
+    std::wstring ssid;
+    int signal = 0; // 0..100
+    bool secured = false;
+    bool connected = false;
+    bool saved = false; // Windows already has a profile (password) for it
+  };
+  struct WifiState {
+    bool available = false; // there is a Wi-Fi adapter
+    bool connected = false;
+    std::wstring ssid;
+    int signal = 0;
+    std::vector<WifiNetwork> networks;
+  };
+  WifiState queryWifi();
+  void scanWifi(); // asks the adapter to refresh the list (results arrive within a few seconds)
+  // password: ignored when the network is open or already saved. Returns false on immediate failure.
+  bool connectWifi(const std::wstring& ssid, const std::wstring& password);
+  bool disconnectWifi();
+
+  // ── Displays & brightness ────────────────────────────────────────────────
+  struct DisplayInfo {
+    std::wstring id;   // stable for this session
+    std::wstring name; // "LG ULTRAGEAR", "Tela integrada"
+    bool internal = false;
+    bool brightnessSupported = false;
+    int brightness = -1; // 0..100
+    int width = 0, height = 0, refreshRate = 0;
+  };
+  std::vector<DisplayInfo> listDisplays();                        // slow (DDC/CI): worker thread
+  bool setDisplayBrightness(const std::wstring& id, int percent); // slow (DDC/CI): worker thread
 
   // ── Input helpers ────────────────────────────────────────────────────────
   void sendPaste(); // Ctrl+V into the focused window

@@ -21,7 +21,7 @@ BarWidget {
       t += " · " + Math.floor(Battery.minutesLeft / 60) + "h" + String(Battery.minutesLeft % 60).padStart(2, "0") + " restantes";
     return t;
   }
-  onClicked: Shell.openUri("ms-settings:batterysaver")
+  onClicked: Panels.toggle("control-center:power")
 
   NGlyph {
     icon: Battery.glyph

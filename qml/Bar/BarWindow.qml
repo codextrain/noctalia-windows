@@ -120,6 +120,11 @@ Window {
     "notifications": notificationsComponent,
     "control-center": controlCenterComponent,
     "session": sessionComponent,
+    "media": mediaComponent,
+    "bluetooth": bluetoothComponent,
+    "brightness": brightnessComponent,
+    "weather": weatherComponent,
+    "sysmon": sysmonComponent,
   })
 
   Component { id: launcherComponent; LauncherWidget {} }
@@ -131,6 +136,11 @@ Window {
   Component { id: notificationsComponent; NotificationsWidget {} }
   Component { id: controlCenterComponent; ControlCenterWidget {} }
   Component { id: sessionComponent; SessionWidget {} }
+  Component { id: mediaComponent; MediaWidget {} }
+  Component { id: bluetoothComponent; BluetoothWidget {} }
+  Component { id: brightnessComponent; BrightnessWidget {} }
+  Component { id: weatherComponent; WeatherWidget {} }
+  Component { id: sysmonComponent; SysmonWidget {} }
 
   component Section: Row {
     id: section
@@ -194,7 +204,7 @@ Window {
     MouseArea {
       anchors.fill: parent
       acceptedButtons: Qt.RightButton
-      onClicked: Shell.quickSettings()
+      onClicked: Panels.toggle("control-center")
     }
 
     Section {

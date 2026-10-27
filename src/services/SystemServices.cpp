@@ -13,6 +13,25 @@ BatteryService::BatteryService(QObject* parent) : QObject(parent) {
   connect(&m_timer, &QTimer::timeout, this, &BatteryService::poll);
   m_timer.start();
   poll();
+  refreshPlans();
+}
+
+void BatteryService::refreshPlans() {
+  QVariantList list;
+  for (const auto& p : platform::listPowerPlans()) {
+    list.append(QVariantMap{{"guid", QString::fromStdWString(p.guid)},
+                            {"name", QString::fromStdWString(p.name)},
+                            {"active", p.active}});
+  }
+  if (list != m_plans) {
+    m_plans = list;
+    emit plansChanged();
+  }
+}
+
+void BatteryService::setPlan(const QString& guid) {
+  platform::setPowerPlan(guid.toStdWString());
+  refreshPlans();
 }
 
 void BatteryService::poll() {
@@ -180,4 +199,50 @@ void WorkspaceService::previous() { activate(m_current - 1); }
 void WorkspaceService::create() {
   platform::createDesktop();
   poll(true);
+}
+
+// ── System monitor ──────────────────────────────────────────────────────────
+
+SystemMonitorService::SystemMonitorService(QObject* parent) : QObject(parent) {
+  m_timer.setInterval(1500);
+  connect(&m_timer, &QTimer::timeout, this, &SystemMonitorService::poll);
+}
+
+void SystemMonitorService::setActive(bool on) {
+  if (on) {
+    acquire();
+  } else {
+    release();
+  }
+}
+
+void SystemMonitorService::acquire() {
+  if (m_activeCount++ == 0) {
+    poll();
+    m_timer.start();
+    emit activeChanged();
+  }
+}
+
+void SystemMonitorService::release() {
+  if (m_activeCount > 0 && --m_activeCount == 0) {
+    m_timer.stop();
+    emit activeChanged();
+  }
+}
+
+void SystemMonitorService::poll() {
+  const platform::SystemStats s = platform::querySystem();
+  m_cpu = s.cpuPercent;
+  m_memUsed = static_cast<double>(s.memUsed);
+  m_memTotal = static_cast<double>(s.memTotal);
+  m_diskTotal = static_cast<double>(s.diskTotal);
+  m_diskUsed = static_cast<double>(s.diskTotal - s.diskFree);
+  m_uptime = static_cast<double>(s.uptimeSeconds);
+  m_name = QString::fromStdWString(s.computerName);
+  m_history.append(m_cpu);
+  while (m_history.size() > 40) {
+    m_history.removeFirst();
+  }
+  emit changed();
 }

@@ -7,7 +7,7 @@ import "../../Widgets"
 BarWidget {
   id: root
   tooltipText: "Central de controle"
-  onClicked: Shell.quickSettings()
+  onClicked: Panels.toggle("control-center")
   onRightClicked: if (bar) bar.openShellMenu(root)
 
   NGlyph { icon: "noctalia"; color: root.foreground }

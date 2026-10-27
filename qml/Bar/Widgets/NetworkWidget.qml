@@ -7,7 +7,7 @@ import "../../Widgets"
 BarWidget {
   id: root
   tooltipText: Network.label
-  onClicked: Shell.quickSettings()
+  onClicked: Panels.toggle("control-center:network")
   onRightClicked: Shell.openUri("ms-settings:network-status")
 
   NGlyph {

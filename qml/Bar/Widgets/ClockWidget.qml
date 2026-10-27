@@ -4,7 +4,7 @@ import ".."
 import "../../Commons"
 import "../../Widgets"
 
-// Noctalia: left click = calendar. On Windows the notification center holds the calendar.
+// Noctalia: left click = control center > calendar. Right click = Windows notification center.
 BarWidget {
   id: root
 
@@ -13,10 +13,11 @@ BarWidget {
   readonly property string dateFormat: Config.shell.date_format ?? "dddd, d 'de' MMMM"
 
   tooltipText: {
-    const d = Qt.locale().toString(now, dateFormat);
+    const d = now.toLocaleDateString(Qt.locale(), dateFormat);
     return d.charAt(0).toUpperCase() + d.slice(1);
   }
-  onClicked: Shell.notificationCenter()
+  onClicked: Panels.toggle("control-center:calendar")
+  onRightClicked: Shell.notificationCenter()
 
   Timer {
     // Tick exactly on the next second boundary, then every second.

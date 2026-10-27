@@ -39,7 +39,7 @@ namespace platform {
   void initialize() {}
 
   std::unique_ptr<AudioEndpoint> AudioEndpoint::create(std::function<void(float, bool)> onChange,
-                                                       std::function<void()>) {
+                                                       std::function<void()>, bool) {
     return std::make_unique<StubAudio>(std::move(onChange));
   }
 
@@ -151,5 +151,104 @@ namespace platform {
   void unregisterHotkey(int) {}
   int hotkeyFromMessage(const void*) { return -1; }
   void sendPaste() { std::printf("[stub] paste\n"); }
+
+} // namespace platform
+
+// ── control center (stub) ───────────────────────────────────────────────────
+
+namespace platform {
+
+  std::vector<AudioDevice> listAudioDevices(bool capture) {
+    if (capture) {
+      return {{L"mic1", L"Microfone (Headset USB)", true}, {L"mic2", L"Microfone da webcam", false}};
+    }
+    return {{L"out1", L"Alto-falantes (Realtek Audio)", true}, {L"out2", L"Headset USB", false}, {L"out3", L"Monitor LG (HDMI)", false}};
+  }
+  bool setDefaultAudioDevice(const std::wstring&) { return true; }
+
+  std::vector<AudioSession> listAudioSessions() {
+    return {{L"s1", L"Spotify", L"spotify.exe", 0.8F, false, true},
+            {L"s2", L"Google Chrome", L"chrome.exe", 0.55F, false, false},
+            {L"s3", L"Discord", L"discord.exe", 1.0F, true, false}};
+  }
+  void setAudioSessionVolume(const std::wstring&, float) {}
+  void setAudioSessionMuted(const std::wstring&, bool) {}
+
+  std::vector<PowerPlan> listPowerPlans() {
+    return {{L"{a}", L"Equilibrado", true}, {L"{b}", L"Alto desempenho", false}, {L"{c}", L"Economia de energia", false}};
+  }
+  bool setPowerPlan(const std::wstring&) { return true; }
+
+  SystemStats querySystem() {
+    return {.cpuPercent = 23.5, .memTotal = 16ULL << 30, .memUsed = 9ULL << 30, .uptimeSeconds = 3 * 3600 + 25 * 60,
+            .diskTotal = 512ULL << 30, .diskFree = 180ULL << 30, .computerName = L"DIEGO-PC"};
+  }
+
+} // namespace platform
+
+// ── media / radios / wifi / displays (stub) ─────────────────────────────────
+
+namespace platform {
+
+  namespace {
+    class StubMedia final : public MediaController {
+    public:
+      explicit StubMedia(std::function<void(const MediaState&)> fn) : m_fn(std::move(fn)) { publish(); }
+      void playPause() override {
+        m_playing = !m_playing;
+        publish();
+      }
+      void next() override { publish(); }
+      void previous() override { publish(); }
+      void seek(double) override { publish(); }
+
+    private:
+      void publish() {
+        MediaState s;
+        s.available = true;
+        s.title = L"Midnight City";
+        s.artist = L"M83";
+        s.album = L"Hurry Up, We're Dreaming";
+        s.appId = L"Spotify.exe";
+        s.playing = m_playing;
+        s.canNext = s.canPrevious = s.canSeek = true;
+        s.position = 95;
+        s.duration = 243;
+        m_fn(s);
+      }
+      std::function<void(const MediaState&)> m_fn;
+      bool m_playing = true;
+    };
+  } // namespace
+
+  std::unique_ptr<MediaController> MediaController::create(std::function<void(const MediaState&)> onChange) {
+    return std::make_unique<StubMedia>(std::move(onChange));
+  }
+
+  RadioState queryRadio(RadioKind kind) { return {true, kind == RadioKind::WiFi}; }
+  bool setRadio(RadioKind, bool) { return true; }
+  std::vector<BluetoothDevice> listBluetoothDevices() {
+    return {{L"bt1", L"Galaxy Buds2", true, L"headset"}, {L"bt2", L"MX Master 3", false, L"mouse"}, {L"bt3", L"Xbox Wireless Controller", false, L"gamepad"}};
+  }
+
+  WifiState queryWifi() {
+    WifiState s;
+    s.available = true;
+    s.connected = true;
+    s.ssid = L"CasaDiego_5G";
+    s.signal = 82;
+    s.networks = {{L"CasaDiego_5G", 82, true, true, true}, {L"CasaDiego", 74, true, false, true},
+                  {L"Vizinho 2.4", 40, true, false, false}, {L"Cafe Publico", 25, false, false, false}};
+    return s;
+  }
+  void scanWifi() {}
+  bool connectWifi(const std::wstring&, const std::wstring&) { return true; }
+  bool disconnectWifi() { return true; }
+
+  std::vector<DisplayInfo> listDisplays() {
+    return {{L"\\\\.\\DISPLAY1", L"LG ULTRAGEAR", false, true, 70, 2560, 1440, 144},
+            {L"\\\\.\\DISPLAY2", L"Dell P2419H", false, false, -1, 1920, 1080, 60}};
+  }
+  bool setDisplayBrightness(const std::wstring&, int) { return true; }
 
 } // namespace platform

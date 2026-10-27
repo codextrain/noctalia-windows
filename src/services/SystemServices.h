@@ -15,9 +15,14 @@ class BatteryService : public QObject {
   Q_PROPERTY(bool plugged READ plugged NOTIFY changed)
   Q_PROPERTY(int minutesLeft READ minutesLeft NOTIFY changed)
   Q_PROPERTY(QString glyph READ glyph NOTIFY changed)
+  // Windows power plans: [{guid, name, active}]
+  Q_PROPERTY(QVariantList plans READ plans NOTIFY plansChanged)
 
 public:
   explicit BatteryService(QObject* parent = nullptr);
+  QVariantList plans() const { return m_plans; }
+  Q_INVOKABLE void refreshPlans();
+  Q_INVOKABLE void setPlan(const QString& guid);
   bool present() const { return m_present; }
   int percent() const { return m_percent; }
   bool charging() const { return m_charging; }
@@ -27,9 +32,11 @@ public:
 
 signals:
   void changed();
+  void plansChanged();
 
 private:
   void poll();
+  QVariantList m_plans;
   QTimer m_timer;
   bool m_present = false;
   int m_percent = -1;
@@ -94,4 +101,48 @@ private:
   int m_current = 0;
   QList<bool> m_occupied;
   qint64 m_suppressUntil = 0; // ignore stale reads right after we switch
+};
+
+// ── System monitor ──────────────────────────────────────────────────────────
+// QML: SystemMonitor.cpu (0..100), memUsed/memTotal (bytes), diskUsed/diskTotal, uptime (s).
+// Polls only while `active` is true (set by whatever is showing the numbers).
+class SystemMonitorService : public QObject {
+  Q_OBJECT
+  Q_PROPERTY(bool active READ active WRITE setActive NOTIFY activeChanged)
+  Q_PROPERTY(double cpu READ cpu NOTIFY changed)
+  Q_PROPERTY(double memUsed READ memUsed NOTIFY changed)
+  Q_PROPERTY(double memTotal READ memTotal NOTIFY changed)
+  Q_PROPERTY(double diskUsed READ diskUsed NOTIFY changed)
+  Q_PROPERTY(double diskTotal READ diskTotal NOTIFY changed)
+  Q_PROPERTY(double uptime READ uptime NOTIFY changed)
+  Q_PROPERTY(QString computerName READ computerName NOTIFY changed)
+  Q_PROPERTY(QVariantList cpuHistory READ cpuHistory NOTIFY changed)
+
+public:
+  explicit SystemMonitorService(QObject* parent = nullptr);
+  bool active() const { return m_activeCount > 0; }
+  void setActive(bool on);
+  double cpu() const { return m_cpu; }
+  double memUsed() const { return m_memUsed; }
+  double memTotal() const { return m_memTotal; }
+  double diskUsed() const { return m_diskUsed; }
+  double diskTotal() const { return m_diskTotal; }
+  double uptime() const { return m_uptime; }
+  QString computerName() const { return m_name; }
+  QVariantList cpuHistory() const { return m_history; }
+  // Several users can ask for updates: each acquire() needs a release().
+  Q_INVOKABLE void acquire();
+  Q_INVOKABLE void release();
+
+signals:
+  void activeChanged();
+  void changed();
+
+private:
+  void poll();
+  QTimer m_timer;
+  int m_activeCount = 0;
+  double m_cpu = 0, m_memUsed = 0, m_memTotal = 0, m_diskUsed = 0, m_diskTotal = 0, m_uptime = 0;
+  QString m_name;
+  QVariantList m_history;
 };

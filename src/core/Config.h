@@ -16,6 +16,9 @@ class Config : public QObject {
   Q_PROPERTY(QVariantMap windows READ windows NOTIFY changed)
   Q_PROPERTY(QVariantMap launcher READ launcher NOTIFY changed)
   Q_PROPERTY(QVariantMap keybinds READ keybinds NOTIFY changed)
+  Q_PROPERTY(QVariantMap weather READ weather NOTIFY changed)
+  Q_PROPERTY(QVariantMap location READ location NOTIFY changed)
+  Q_PROPERTY(QVariantMap osd READ osd NOTIFY changed)
   Q_PROPERTY(QString path READ path CONSTANT)
   Q_PROPERTY(QString lastError READ lastError NOTIFY changed)
 
@@ -30,6 +33,9 @@ public:
   QVariantMap windows() const { return m_data.value("windows").toObject().toVariantMap(); }
   QVariantMap launcher() const { return m_data.value("launcher").toObject().toVariantMap(); }
   QVariantMap keybinds() const { return m_data.value("keybinds").toObject().toVariantMap(); }
+  QVariantMap weather() const { return m_data.value("weather").toObject().toVariantMap(); }
+  QVariantMap location() const { return m_data.value("location").toObject().toVariantMap(); }
+  QVariantMap osd() const { return m_data.value("osd").toObject().toVariantMap(); }
   QString path() const { return m_path; }
   QString lastError() const { return m_lastError; }
 

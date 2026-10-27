@@ -81,7 +81,7 @@ PanelWindow {
 
   onOpened: {
     contextMenu.close();
-    search.text = Shell.env("NOCTALIA_QUERY");
+    search.text = panelArg === "session" ? pfx + "session " : Shell.env("NOCTALIA_QUERY");
     view = Config.launcher.default_view ?? "recent";
     refresh(false);
     // Nothing used yet? Show everything instead of an empty "Recent".

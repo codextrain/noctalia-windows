@@ -75,7 +75,7 @@ QJsonObject Config::defaults() {
            {"start", QJsonArray{"launcher", "workspaces"}},
            {"center", QJsonArray{"clock"}},
            // Same order as Noctalia's default (widgets not ported yet are skipped).
-           {"end", QJsonArray{"notifications", "network", "volume", "battery", "control-center", "session"}},
+           {"end", QJsonArray{"media", "notifications", "network", "bluetooth", "volume", "brightness", "battery", "control-center", "session"}},
        }},
       {"launcher",
        QJsonObject{
@@ -98,6 +98,23 @@ QJsonObject Config::defaults() {
            {"control-center", ""},
            {"clipboard", ""},
            {"wallpaper", ""},
+       }},
+      {"weather",
+       QJsonObject{
+           {"enabled", true},
+           {"unit", "celsius"}, // celsius | fahrenheit
+           {"refresh_minutes", 30},
+       }},
+      {"location",
+       QJsonObject{
+           {"auto_locate", false}, // true = find the city by IP address
+           {"address", ""},        // e.g. "Joinville, SC"
+       }},
+      {"osd",
+       QJsonObject{
+           {"enabled", true},       // Noctalia's volume / brightness popup
+           {"position", "bottom"},  // top | bottom
+           {"timeout_ms", 1500},
        }},
       {"windows",
        QJsonObject{

@@ -3,6 +3,7 @@ import QtQml.Models
 import Noctalia
 import "Bar"
 import "Panels/Launcher"
+import "Panels/ControlCenter"
 
 // Entry point: one bar per connected monitor (follows hot-plugging automatically) and the
 // panels, which open on the monitor under the mouse.
@@ -15,6 +16,7 @@ QtObject {
   }
 
   property LauncherPanel launcher: LauncherPanel {}
+  property ControlCenterPanel controlCenter: ControlCenterPanel {}
 
   property Connections configErrors: Connections {
     target: Config

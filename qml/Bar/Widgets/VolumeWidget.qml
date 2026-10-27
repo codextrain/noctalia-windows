@@ -15,7 +15,7 @@ BarWidget {
   shown: Audio.available
   tooltipText: Audio.muted ? "Volume: mudo" : "Volume: " + percent + "%"
 
-  onClicked: Shell.quickSettings()
+  onClicked: Panels.toggle("control-center:audio")
   onRightClicked: Audio.toggleMute()
   onWheelUp: Audio.changeVolume(0.05)
   onWheelDown: Audio.changeVolume(-0.05)

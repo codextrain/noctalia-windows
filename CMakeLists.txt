@@ -22,6 +22,9 @@ set(SOURCES
     src/services/PanelService.cpp src/services/PanelService.h
     src/services/IconProvider.cpp src/services/IconProvider.h
     src/core/MathEval.cpp src/core/MathEval.h
+    src/core/Worker.h
+    src/services/DeviceServices.cpp src/services/DeviceServices.h
+    src/services/WeatherService.cpp src/services/WeatherService.h
     src/platform/Platform.h
 )
 
@@ -33,9 +36,19 @@ if(WIN32)
       src/platform/win/WinAppBar.cpp
       src/platform/win/WinApps.cpp
       src/platform/win/WinWindows.cpp
+      src/platform/win/WinAudioDevices.cpp
+      src/platform/win/WinSystem.cpp
+      src/platform/win/WinWifi.cpp
+      src/platform/win/WinDisplays.cpp
       src/platform/win/WinWindowUtil.h
       src/platform/win/WinInput.h
   )
+  if(MSVC)
+    # Media controls, radios and Bluetooth use C++/WinRT (part of the Windows SDK).
+    list(APPEND SOURCES src/platform/win/WinMedia.cpp src/platform/win/WinRadios.cpp)
+  else()
+    list(APPEND SOURCES src/platform/win/WinRtStub.cpp)
+  endif()
 else()
   # Fake data so the UI can be developed and previewed on Linux/macOS.
   list(APPEND SOURCES src/platform/stub/PlatformStub.cpp)
@@ -66,9 +79,10 @@ target_link_libraries(noctalia-win PRIVATE Qt6::Core Qt6::Gui Qt6::Qml Qt6::Quic
 
 if(WIN32)
   target_compile_definitions(noctalia-win PRIVATE UNICODE _UNICODE NOMINMAX WIN32_LEAN_AND_MEAN)
-  target_link_libraries(noctalia-win PRIVATE ole32 user32 shell32 advapi32 dwmapi powrprof uuid gdi32 propsys)
+  target_link_libraries(noctalia-win PRIVATE ole32 oleaut32 user32 shell32 advapi32 dwmapi powrprof uuid gdi32 propsys wlanapi dxva2 wbemuuid)
   if(MSVC)
-    target_compile_options(noctalia-win PRIVATE /W4 /permissive- /utf-8)
+    target_compile_options(noctalia-win PRIVATE /W4 /permissive- /utf-8 /bigobj)
+    target_link_libraries(noctalia-win PRIVATE windowsapp)
   endif()
   set_target_properties(noctalia-win PROPERTIES OUTPUT_NAME "noctalia")
 else()

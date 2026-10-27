@@ -63,7 +63,7 @@ namespace platform {
     // Receives "default device changed" notifications (called on a COM worker thread).
     class DeviceNotifier final : public IMMNotificationClient {
     public:
-      explicit DeviceNotifier(std::function<void()> fn) : m_fn(std::move(fn)) {}
+      DeviceNotifier(std::function<void()> fn, EDataFlow flow) : m_fn(std::move(fn)), m_flow(flow) {}
 
       ULONG STDMETHODCALLTYPE AddRef() override { return ++m_refs; }
       ULONG STDMETHODCALLTYPE Release() override {
@@ -83,7 +83,7 @@ namespace platform {
         return E_NOINTERFACE;
       }
       HRESULT STDMETHODCALLTYPE OnDefaultDeviceChanged(EDataFlow flow, ERole role, LPCWSTR) override {
-        if (flow == eRender && role == eConsole && m_fn) {
+        if (flow == m_flow && role == eConsole && m_fn) {
           m_fn();
         }
         return S_OK;
@@ -96,13 +96,15 @@ namespace platform {
     private:
       std::atomic<ULONG> m_refs{1};
       std::function<void()> m_fn;
+      EDataFlow m_flow = eRender;
     };
 
     class WinAudioEndpoint final : public AudioEndpoint {
     public:
-      WinAudioEndpoint(std::function<void(float, bool)> onChange, std::function<void()> onDeviceChanged) {
+      WinAudioEndpoint(std::function<void(float, bool)> onChange, std::function<void()> onDeviceChanged, bool capture)
+          : m_flow(capture ? eCapture : eRender) {
         m_volumeCallback = new VolumeCallback(std::move(onChange));
-        m_deviceNotifier = new DeviceNotifier(std::move(onDeviceChanged));
+        m_deviceNotifier = new DeviceNotifier(std::move(onDeviceChanged), m_flow);
         if (SUCCEEDED(CoCreateInstance(__uuidof(MMDeviceEnumerator), nullptr, CLSCTX_ALL,
                                        IID_PPV_ARGS(&m_enumerator)))) {
           m_enumerator->RegisterEndpointNotificationCallback(m_deviceNotifier);
@@ -125,7 +127,7 @@ namespace platform {
         if (m_enumerator == nullptr) {
           return false;
         }
-        if (FAILED(m_enumerator->GetDefaultAudioEndpoint(eRender, eConsole, &m_device))) {
+        if (FAILED(m_enumerator->GetDefaultAudioEndpoint(m_flow, eConsole, &m_device))) {
           return false;
         }
         if (FAILED(m_device->Activate(__uuidof(IAudioEndpointVolume), CLSCTX_ALL, nullptr,
@@ -201,6 +203,7 @@ namespace platform {
         safeRelease(m_device);
       }
 
+      EDataFlow m_flow = eRender;
       IMMDeviceEnumerator* m_enumerator = nullptr;
       IMMDevice* m_device = nullptr;
       IAudioEndpointVolume* m_volume = nullptr;
@@ -211,8 +214,8 @@ namespace platform {
   } // namespace
 
   std::unique_ptr<AudioEndpoint> AudioEndpoint::create(std::function<void(float, bool)> onChange,
-                                                       std::function<void()> onDefaultDeviceChanged) {
-    return std::make_unique<WinAudioEndpoint>(std::move(onChange), std::move(onDefaultDeviceChanged));
+                                                       std::function<void()> onDefaultDeviceChanged, bool capture) {
+    return std::make_unique<WinAudioEndpoint>(std::move(onChange), std::move(onDefaultDeviceChanged), capture);
   }
 
 } // namespace platform

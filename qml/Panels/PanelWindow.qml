@@ -21,7 +21,10 @@ Window {
   property real barAnchorX: -1 // for placement "bar": horizontal center, -1 = screen center
   default property alias content: surface.data
   readonly property alias surfaceItem: surface
-  readonly property bool wanted: Panels.current === panelName
+  // Panels.current is "name" or "name:argument" (e.g. "control-center:audio").
+  readonly property bool wanted: Panels.current === panelName || Panels.current.startsWith(panelName + ":")
+  readonly property string panelArg: wanted && Panels.current.indexOf(":") > 0
+                                     ? Panels.current.slice(Panels.current.indexOf(":") + 1) : ""
   property bool shown: false // true while open (and during the closing animation)
 
   signal opened

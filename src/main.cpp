@@ -5,6 +5,8 @@
 #include "core/Theme.h"
 #include "platform/Platform.h"
 #include "services/AudioService.h"
+#include "services/DeviceServices.h"
+#include "services/WeatherService.h"
 #include "services/IconProvider.h"
 #include "services/LauncherService.h"
 #include "services/PanelService.h"
@@ -92,6 +94,12 @@ int main(int argc, char* argv[]) {
   BatteryService battery;
   NetworkService network;
   WorkspaceService workspaces;
+  SystemMonitorService systemMonitor;
+  MediaService media;
+  BluetoothService bluetooth;
+  WifiService wifi;
+  BrightnessService brightness;
+  WeatherService weather(&config);
   PanelService panels(&config);
   LauncherService launcher(&config);
 
@@ -104,12 +112,19 @@ int main(int argc, char* argv[]) {
   qmlRegisterSingletonInstance("Noctalia", 1, 0, "Battery", &battery);
   qmlRegisterSingletonInstance("Noctalia", 1, 0, "Network", &network);
   qmlRegisterSingletonInstance("Noctalia", 1, 0, "Workspaces", &workspaces);
+  qmlRegisterSingletonInstance("Noctalia", 1, 0, "SystemMonitor", &systemMonitor);
+  qmlRegisterSingletonInstance("Noctalia", 1, 0, "Media", &media);
+  qmlRegisterSingletonInstance("Noctalia", 1, 0, "Bluetooth", &bluetooth);
+  qmlRegisterSingletonInstance("Noctalia", 1, 0, "Wifi", &wifi);
+  qmlRegisterSingletonInstance("Noctalia", 1, 0, "Brightness", &brightness);
+  qmlRegisterSingletonInstance("Noctalia", 1, 0, "Weather", &weather);
   qmlRegisterSingletonInstance("Noctalia", 1, 0, "Panels", &panels);
   qmlRegisterSingletonInstance("Noctalia", 1, 0, "Launcher", &launcher);
   qmlRegisterType<AppBarItem>("Noctalia", 1, 0, "AppBar");
 
   QQmlApplicationEngine engine;
   engine.addImageProvider("icons", new IconProvider); // the engine takes ownership
+  engine.addImageProvider("media", new MediaArtProvider(&media));
   // NOCTALIA_QML_DIR=path/to/qml loads QML from disk (live editing without rebuilding).
   const QString qmlDir = qEnvironmentVariable("NOCTALIA_QML_DIR");
   const QUrl mainUrl = qmlDir.isEmpty() ? QUrl(QStringLiteral("qrc:/qml/Main.qml"))
