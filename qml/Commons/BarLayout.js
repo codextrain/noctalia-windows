@@ -3,7 +3,7 @@ var sections = ["start", "center", "end"];
 var defaults = {
     start: ["launcher", "workspaces", "gpu-cat"],
     center: ["clock"],
-    end: ["media", "tray", "notifications", "clipboard", "network", "bluetooth", "volume", "brightness", "battery", "control-center", "session"]
+    end: ["running-apps", "tray", "notifications", "clipboard", "network", "bluetooth", "volume", "brightness", "battery", "control-center", "session"]
 };
 function validList(value) {
     return Array.isArray(value) && value.every(function(v) { return typeof v === "string" && v.length > 0; });

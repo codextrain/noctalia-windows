@@ -8,6 +8,14 @@ QtObject {
   id: styleRoot
   property var niriState: ({})
   property bool readingNiriState: false
+  function publishBorderPalette() {
+    const palette=JSON.stringify({active:String(Theme.colors.primary),inactive:String(Theme.colors.outlineVariant)});
+    if ((Config.windows.border_palette_json ?? "") !== palette)
+      Config.setValue("windows.border_palette_json",palette);
+  }
+  property Timer borderPaletteSave: Timer { interval:200; onTriggered:styleRoot.publishBorderPalette() }
+  property Connections borderThemeChanges: Connections { target:Theme; function onChanged(){styleRoot.borderPaletteSave.restart();} }
+  Component.onCompleted: borderPaletteSave.start()
   // The current Qt runtime paints white margins with system acrylic.
   // Preserve the configured shell backgrounds until a compatible renderer exists.
   readonly property bool glassActive: false

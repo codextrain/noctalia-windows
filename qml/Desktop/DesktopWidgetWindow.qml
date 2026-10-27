@@ -16,6 +16,7 @@ Window {
   property real widgetScale: modelData.scale ?? 1.0
 
   flags: Qt.FramelessWindowHint | Qt.Tool | Qt.WindowStaysOnBottomHint | Qt.WindowDoesNotAcceptFocus | Qt.NoDropShadowWindowHint
+  transientParent: null
   color: "transparent"
   visible: true
   title: "Noctalia " + type
@@ -32,7 +33,11 @@ Window {
     }
   }
 
-  Component.onCompleted: SystemMonitor.acquire()
+  Component.onCompleted: { SystemMonitor.acquire(); lower(); }
+  onVisibleChanged: if (visible) lower()
+  // Qt can raise tool windows again while rebuilding native handles. Keep desktop
+  // cards below applications without changing their saved position or visibility.
+  Timer { interval: 500; running: w.visible; repeat: true; onTriggered: w.lower() }
   Component.onDestruction: SystemMonitor.release()
 
   property date now: new Date()

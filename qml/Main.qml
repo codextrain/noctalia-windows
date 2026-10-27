@@ -17,6 +17,10 @@ import "Commons"
 QtObject {
   id: root
   property var wallpaperThemeSync: WallpaperThemeSync
+  property Instantiator wallpaperTransitions: Instantiator {
+    model: Qt.application.screens
+    delegate: WallpaperTransition {}
+  }
 
   property Instantiator bars: Instantiator {
     model: Qt.application.screens

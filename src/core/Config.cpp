@@ -83,7 +83,7 @@ QJsonObject Config::defaults() {
            {"start", QJsonArray{"launcher", "workspaces", "gpu-cat"}},
            {"center", QJsonArray{"clock"}},
            // Same order as Noctalia's default (widgets not ported yet are skipped).
-           {"end", QJsonArray{"media", "tray", "notifications", "clipboard", "network", "bluetooth", "volume", "brightness", "battery", "control-center", "session"}},
+           {"end", QJsonArray{"running-apps", "tray", "notifications", "clipboard", "network", "bluetooth", "volume", "brightness", "battery", "control-center", "session"}},
        }},
       {"launcher",
        QJsonObject{
@@ -168,9 +168,14 @@ QJsonObject Config::defaults() {
       {"windows",
        QJsonObject{
            {"corner_rounding_percent", 25}, // NiriWin: 0 = square, 100 = maximum custom radius
+           {"border_enabled", true},
+           {"layout_animation_enabled", true},
+           {"alt_click_spotlight_enabled", true},
+           {"win_drag_enabled", true},
            {"blur_enabled", false},
            {"blur_intensity_percent", 50},
            {"autohide_taskbar", false},   // auto-hide the Windows taskbar while the shell runs
+           {"hide_taskbar_permanently", false}, // reversible hard hide applied by NiriWin
            {"hide_on_fullscreen", true},  // hide the bar while a game/video is fullscreen
        }},
   };
