@@ -283,6 +283,9 @@ namespace platform {
 
   // ── Wallpaper ────────────────────────────────────────────────────────────
   std::wstring currentWallpaper(); // path of the wallpaper on the first monitor ("" if none / slideshow)
+
+  // Full paths of running executables whose file name contains `nameSubstring` (case-insensitive).
+  std::vector<std::wstring> runningProcessPaths(const std::wstring& nameSubstring);
   // fillMode: "crop" (fill) | "fit" | "stretch" | "center" | "repeat" (tile) | "span"
   bool setWallpaper(const std::wstring& path, const std::wstring& fillMode);
 

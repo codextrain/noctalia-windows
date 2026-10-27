@@ -4,6 +4,7 @@
 #include <QPointer>
 #include <cstdint>
 #include <QWindow>
+#include <QTimer>
 #include <memory>
 
 namespace platform {
@@ -20,6 +21,8 @@ class ShellService : public QObject {
   Q_PROPERTY(QString userName READ userName CONSTANT)
   Q_PROPERTY(QString osName READ osName CONSTANT)
   Q_PROPERTY(bool autostart READ autostart WRITE setAutostart NOTIFY autostartChanged)
+  // file:// URL of NiriWin's state/status.json ("" if not found). See findNiriStatus().
+  Q_PROPERTY(QString niriStatusUrl READ niriStatusUrl NOTIFY niriStatusUrlChanged)
 
 public:
   explicit ShellService(Config* config, QObject* parent = nullptr);
@@ -32,6 +35,7 @@ public:
   // "Start with Windows" (HKCU\...\Run)
   bool autostart() const;
   void setAutostart(bool on);
+  QString niriStatusUrl() const { return m_niriStatusUrl; }
   Q_INVOKABLE void openSettings(const QString& page = QString()) { emit settingsRequested(page); }
   // Debug helpers for screenshots (NOCTALIA_* environment variables).
   Q_INVOKABLE QString env(const QString& name) const;
@@ -52,10 +56,14 @@ public:
 signals:
   void autostartChanged();
   void settingsRequested(const QString& page);
+  void niriStatusUrlChanged();
 
 private:
   void applyTaskbarSetting();
   void restoreTaskbar();
+  void findNiriStatus();
+  QString m_niriStatusUrl;
+  QTimer* m_niriTimer = nullptr;
 
   Config* m_config = nullptr;
   bool m_changedTaskbar = false;

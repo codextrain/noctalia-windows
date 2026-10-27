@@ -5,7 +5,7 @@ import "../../Widgets"
 import "../../Commons/WindowIndicators.js" as WindowIndicators
 
 // Two modes:
-//  - NiriWin running (NOCTALIA_NIRIWIN_STATUS set and fresh): one numbered pill per window on
+//  - NiriWin running (Shell.niriStatusUrl found and fresh): one numbered pill per window on
 //    this bar's monitor, the active one highlighted.
 //  - otherwise: Windows virtual desktops drawn like Noctalia's default workspace pills
 //    (16px high, focused = 2.2x wide, occupied = secondary, empty = secondary at 55%).
@@ -21,7 +21,7 @@ Item {
   readonly property real pillHeight: Style.baseGlyphSize
   readonly property real gap: Style.spaceXs
   readonly property string monitorName: bar && bar.screen ? bar.screen.name : ""
-  readonly property string statusUrl: Shell.env("NOCTALIA_NIRIWIN_STATUS")
+  readonly property string statusUrl: Shell.niriStatusUrl
   implicitHeight: capsuleHeight
   implicitWidth: (niriMode ? niriRow.implicitWidth : desktopRow.implicitWidth) + 2 * Style.barCapsulePadding
 

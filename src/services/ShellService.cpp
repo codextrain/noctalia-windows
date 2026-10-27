@@ -12,6 +12,7 @@
 #include <QSet>
 #include <QSysInfo>
 #include <QDir>
+#include <QFileInfo>
 #include <QSettings>
 #include <QTimer>
 #include <QUrl>
@@ -28,6 +29,14 @@ ShellService::ShellService(Config* config, QObject* parent) : QObject(parent), m
   connect(m_config, &Config::changed, this, &ShellService::applyTaskbarSetting);
   // Always give the taskbar back, even on a normal quit from the menu.
   connect(qApp, &QCoreApplication::aboutToQuit, this, &ShellService::restoreTaskbar);
+
+  // NiriWin may start after us (or stop): look for its status file now and every few seconds.
+  connect(m_config, &Config::changed, this, &ShellService::findNiriStatus);
+  m_niriTimer = new QTimer(this);
+  m_niriTimer->setInterval(5000);
+  connect(m_niriTimer, &QTimer::timeout, this, &ShellService::findNiriStatus);
+  m_niriTimer->start();
+  findNiriStatus();
   applyTaskbarSetting();
 }
 
@@ -78,6 +87,64 @@ void ShellService::setAutostart(bool on) {
   Q_UNUSED(on)
 #endif
   emit autostartChanged();
+}
+
+// Where is NiriWin's state/status.json? In order:
+//   1. NOCTALIA_NIRIWIN_STATUS (file URL or path; set by tools/Start-Noctalia.ps1)
+//   2. windows.niriwin_path in config.json (the status.json itself or the NiriWin folder)
+//   3. next to a running process with "niri" in its name (<exe dir>\state, or one level up)
+//   4. common install folders (C:\NiriWin, %LOCALAPPDATA%\NiriWin, ...)
+void ShellService::findNiriStatus() {
+  auto toUrl = [](const QString& file) { return QUrl::fromLocalFile(QDir::cleanPath(file)).toString(); };
+  auto fromFolderOrFile = [](const QString& p) -> QString {
+    const QFileInfo fi(p);
+    if (fi.isFile()) return fi.absoluteFilePath();
+    if (fi.isDir()) {
+      for (const char* rel : {"state/status.json", "status.json", "../state/status.json"}) {
+        const QFileInfo c(QDir(fi.absoluteFilePath()).filePath(QString::fromLatin1(rel)));
+        if (c.isFile()) return c.absoluteFilePath();
+      }
+    }
+    return {};
+  };
+
+  QString url;
+  const QString env = qEnvironmentVariable("NOCTALIA_NIRIWIN_STATUS");
+  if (!env.isEmpty()) {
+    url = env.contains("://") ? env : toUrl(env);
+  }
+  if (url.isEmpty()) {
+    const QString configured = m_config->windows().value("niriwin_path").toString().trimmed();
+    if (!configured.isEmpty()) {
+      const QString f = fromFolderOrFile(QDir::fromNativeSeparators(configured).remove('"'));
+      if (!f.isEmpty()) url = toUrl(f);
+    }
+  }
+  if (url.isEmpty()) {
+    for (const auto& exe : platform::runningProcessPaths(L"niri")) {
+      const QString f = fromFolderOrFile(QFileInfo(QString::fromStdWString(exe)).absolutePath());
+      if (!f.isEmpty()) { url = toUrl(f); break; }
+    }
+  }
+  if (url.isEmpty()) {
+    const QString home = QDir::homePath();
+    const QStringList folders = {
+        "C:/NiriWin", "C:/niriwin",
+        qEnvironmentVariable("LOCALAPPDATA") + "/NiriWin",
+        qEnvironmentVariable("APPDATA") + "/NiriWin",
+        home + "/NiriWin", home + "/Documents/NiriWin", home + "/Documentos/NiriWin",
+        home + "/Desktop/NiriWin", home + "/Downloads/NiriWin",
+        qEnvironmentVariable("ProgramFiles") + "/NiriWin",
+    };
+    for (const auto& folder : folders) {
+      const QString f = fromFolderOrFile(folder);
+      if (!f.isEmpty()) { url = toUrl(f); break; }
+    }
+  }
+  if (url != m_niriStatusUrl) {
+    m_niriStatusUrl = url;
+    emit niriStatusUrlChanged();
+  }
 }
 
 QString ShellService::env(const QString& name) const { return qEnvironmentVariable(name.toUtf8().constData()); }

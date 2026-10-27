@@ -14,7 +14,7 @@ QtObject {
   readonly property real glassStrength: Math.max(0,Math.min(100,Config.windows.blur_intensity_percent ?? 50)) / 100
   function glassColor(color, opacity) { return alpha(color, opacity * (glassActive ? 1 - 0.65 * glassStrength : 1)); }
   function refreshNiriState() {
-    const url = Shell.env("NOCTALIA_NIRIWIN_STATUS");
+    const url = Shell.niriStatusUrl;
     if (!url.length || readingNiriState) return;
     readingNiriState = true;
     const request = new XMLHttpRequest();

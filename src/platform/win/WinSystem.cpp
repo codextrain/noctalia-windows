@@ -105,3 +105,44 @@ namespace platform {
   }
 
 } // namespace platform
+
+// ── Running processes (used to find NiriWin's status file) ─────────────────
+
+#include <tlhelp32.h>
+#include <cwctype>
+
+namespace platform {
+
+  std::vector<std::wstring> runningProcessPaths(const std::wstring& nameSubstring) {
+    std::vector<std::wstring> out;
+    auto lower = [](std::wstring s) {
+      for (auto& c : s) c = static_cast<wchar_t>(std::towlower(c));
+      return s;
+    };
+    const std::wstring needle = lower(nameSubstring);
+    HANDLE snap = CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, 0);
+    if (snap == INVALID_HANDLE_VALUE) {
+      return out;
+    }
+    PROCESSENTRY32W pe{};
+    pe.dwSize = sizeof(pe);
+    for (BOOL ok = Process32FirstW(snap, &pe); ok; ok = Process32NextW(snap, &pe)) {
+      if (lower(pe.szExeFile).find(needle) == std::wstring::npos) {
+        continue;
+      }
+      HANDLE proc = OpenProcess(PROCESS_QUERY_LIMITED_INFORMATION, FALSE, pe.th32ProcessID);
+      if (proc == nullptr) {
+        continue;
+      }
+      wchar_t buf[MAX_PATH * 2];
+      DWORD size = static_cast<DWORD>(std::size(buf));
+      if (QueryFullProcessImageNameW(proc, 0, buf, &size)) {
+        out.emplace_back(buf, size);
+      }
+      CloseHandle(proc);
+    }
+    CloseHandle(snap);
+    return out;
+  }
+
+} // namespace platform

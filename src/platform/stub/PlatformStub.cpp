@@ -273,4 +273,5 @@ namespace platform {
     g_wallpaper = path;
     return true;
   }
+  std::vector<std::wstring> runningProcessPaths(const std::wstring&) { return {}; }
 } // namespace platform

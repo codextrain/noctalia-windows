@@ -25,6 +25,22 @@ Column {
   }
 
   SettingSection {
+    title: "NiriWin"
+    SettingRow {
+      label: "Pasta do NiriWin"
+      description: Shell.niriStatusUrl.length > 0
+                   ? "Encontrado: " + decodeURIComponent(Shell.niriStatusUrl.replace("file:///", "")).replace(/\//g, "\\")
+                   : "Não encontrado. Com o NiriWin aberto ele é achado sozinho; se não, cole aqui a pasta dele (ex.: C:\\NiriWin)."
+      TextBox {
+        width: 260
+        value: Config.windows.niriwin_path ?? ""
+        placeholder: "automático"
+        onEdited: v => Config.setValue("windows.niriwin_path", v)
+      }
+    }
+  }
+
+  SettingSection {
     title: "Arquivo de configuração"
     SettingRow {
       label: Config.path
