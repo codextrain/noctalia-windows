@@ -24,7 +24,7 @@ LRESULT CALLBACK launcherMouse(int code, WPARAM message, LPARAM data) {
 LRESULT CALLBACK launcherKey(int code, WPARAM message, LPARAM data) {
   if (code != HC_ACTION) return CallNextHookEx(nullptr, code, message, data);
   const auto* key = reinterpret_cast<KBDLLHOOKSTRUCT*>(data);
-  if (key->flags & LLKHF_INJECTED) return CallNextHookEx(nullptr, code, message, data);
+  if (key->dwExtraInfo == 0x4e4f4354) return CallNextHookEx(nullptr, code, message, data);
   const bool isWin = key->vkCode == VK_LWIN || key->vkCode == VK_RWIN;
   const bool down = message == WM_KEYDOWN || message == WM_SYSKEYDOWN;
   if (isWin && down && !winHeld) {
@@ -42,7 +42,7 @@ LRESULT CALLBACK launcherKey(int code, WPARAM message, LPARAM data) {
       // Mark Win as used before forwarding its release: suppress Start without
       // swallowing Win down, which would break Windows shortcuts.
       INPUT mask[2]{};
-      for (auto& input : mask) { input.type = INPUT_KEYBOARD; input.ki.wVk = 0xE8; }
+      for (auto& input : mask) { input.type = INPUT_KEYBOARD; input.ki.wVk = 0xE8; input.ki.dwExtraInfo = 0x4e4f4354; }
       mask[1].ki.dwFlags = KEYEVENTF_KEYUP;
       if (SendInput(2, mask, sizeof(INPUT)) == 2) {
         QMetaObject::invokeMethod(winPanels, [panel = winPanels] { panel->toggle("launcher"); }, Qt::QueuedConnection);
