@@ -126,6 +126,7 @@ Window {
     "weather": weatherComponent,
     "sysmon": sysmonComponent,
     "wallpaper": wallpaperComponent,
+    "clipboard": clipboardComponent,
   })
 
   Component { id: launcherComponent; LauncherWidget {} }
@@ -143,6 +144,7 @@ Window {
   Component { id: weatherComponent; WeatherWidget {} }
   Component { id: sysmonComponent; SysmonWidget {} }
   Component { id: wallpaperComponent; WallpaperWidget {} }
+  Component { id: clipboardComponent; ClipboardWidget {} }
 
   component Section: Row {
     id: section

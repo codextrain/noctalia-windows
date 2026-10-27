@@ -51,6 +51,8 @@ QJsonObject Config::defaults() {
            {"ui_scale", 1.0},
            {"animation_enabled", true},
            {"animation_speed", 1.0},
+           {"clipboard_enabled", true},
+           {"clipboard_history_max_entries", 100},
        }},
       {"theme",
        QJsonObject{
@@ -78,7 +80,7 @@ QJsonObject Config::defaults() {
            {"start", QJsonArray{"launcher", "wallpaper", "workspaces"}},
            {"center", QJsonArray{"clock"}},
            // Same order as Noctalia's default (widgets not ported yet are skipped).
-           {"end", QJsonArray{"media", "notifications", "network", "bluetooth", "volume", "brightness", "battery", "control-center", "session"}},
+           {"end", QJsonArray{"media", "notifications", "clipboard", "network", "bluetooth", "volume", "brightness", "battery", "control-center", "session"}},
        }},
       {"launcher",
        QJsonObject{
@@ -99,7 +101,7 @@ QJsonObject Config::defaults() {
            // Global shortcuts. Empty string = disabled. Examples: "Alt+Space", "Ctrl+Shift+K", "Win+Alt+V".
            {"launcher", "Alt+Space"},
            {"control-center", ""},
-           {"clipboard", ""},
+           {"clipboard", "Alt+V"},
            {"wallpaper", ""},
        }},
       {"wallpaper",
