@@ -26,3 +26,9 @@ in that folder). Copyright (c) 2026 noctalia-dev.
 ## Material Color Utilities (Apache 2.0) — `third_party/material_color_utilities/`
 https://github.com/material-foundation/material-color-utilities — Copyright Google LLC.
 See `third_party/material_color_utilities/LICENSE`.
+
+## Vosk / modelo português (Apache 2.0)
+https://github.com/alphacep/vosk-api e https://alphacephei.com/vosk/models — usados pelo helper opcional de comandos por voz locais. Preservar as licenças distribuídas com a biblioteca e o modelo.
+
+## python-sounddevice (MIT)
+https://github.com/spatialaudio/python-sounddevice — entrada de áudio do helper opcional. PortAudio utiliza sua própria licença MIT; preservar as licenças incluídas nas dependências empacotadas.

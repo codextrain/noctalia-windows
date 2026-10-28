@@ -1,4 +1,5 @@
 import QtQuick
+import QtQuick.Window
 import Noctalia
 import ".."
 import "../../Commons"
@@ -9,13 +10,18 @@ BarWidget {
   readonly property bool running:GpuTelemetry.state.available && GpuTelemetry.state.running
   tooltipText:GpuTelemetry.state.available ? "GPU " + Math.round(GpuTelemetry.state.percent) + "% · " + (running ? "Correndo" : "Dormindo") : "GPU: aguardando uma leitura disponível"
   onClicked:Panels.toggle("control-center:system")
+  Item {
+    width:40*Style.uiScale;height:26*Style.uiScale
+    anchors.verticalCenter:parent.verticalCenter
   Canvas {
     id:cat
     objectName:"gpu-cat-canvas"
-    width:40 * Style.uiScale;height:26 * Style.uiScale
-    anchors.verticalCenter:parent.verticalCenter
+    readonly property real rasterScale:Math.max(1,Screen.devicePixelRatio)*2
+    width:40 * Style.uiScale*rasterScale;height:26 * Style.uiScale*rasterScale
+    transformOrigin:Item.Center;scale:1/rasterScale;smooth:true
+    anchors.centerIn:parent
     onPaint:{
-      const c=getContext("2d");c.reset();c.clearRect(0,0,width,height);c.scale(Style.uiScale,Style.uiScale);
+      const c=getContext("2d");c.reset();c.clearRect(0,0,width,height);c.scale(width/40,height/26);
       const fur=c.createLinearGradient(8,5,25,24);fur.addColorStop(0,"#fff8e7");fur.addColorStop(0.45,"#dfc6a9");fur.addColorStop(1,"#997d6c");
       c.fillStyle="rgba(0,0,0,0.25)";c.beginPath();c.moveTo(5,24);c.bezierCurveTo(3,21,35,21,35,24);c.bezierCurveTo(35,27,3,27,5,24);c.fill();
       c.fillStyle=fur;c.strokeStyle="#b89c80";c.lineWidth=2.5;c.lineCap="round";c.lineJoin="round";
@@ -46,6 +52,7 @@ BarWidget {
         c.fillText(GpuTelemetry.state.available ? "z" : "?",34,9);
       }
     }
+  }
   }
   Timer {interval:GpuTelemetry.state.interval;running:root.visible && Style.animationsEnabled;repeat:true;onTriggered:{root.frame=(root.frame+1)%8;cat.requestPaint();}}
   Connections {target:GpuTelemetry;function onStateChanged(){cat.requestPaint();}}

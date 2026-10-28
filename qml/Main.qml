@@ -16,6 +16,11 @@ import "Commons"
 // panels, which open on the monitor under the mouse.
 QtObject {
   id: root
+  property var shutdownTimer: ShutdownTimer
+  property Connections shutdownRequests: Connections {
+    target: ShutdownTimer
+    function onShutdownRequested() { Shell.session("shutdown"); }
+  }
   property var wallpaperThemeSync: WallpaperThemeSync
   property Instantiator wallpaperTransitions: Instantiator {
     model: Qt.application.screens

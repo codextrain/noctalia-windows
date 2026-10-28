@@ -1,8 +1,9 @@
 import QtQuick
+import QtQuick.Window
 import "../Commons"
 
 // Static miniature clay/metal objects. Paint only when resized or state changes.
-Canvas {
+Item {
   id: root
   property string symbol: "network"
   property bool disabled: false
@@ -14,6 +15,12 @@ Canvas {
   onConditionChanged: requestPaint()
   onWidthChanged: requestPaint()
   onHeightChanged: requestPaint()
+ function requestPaint(){drawing.requestPaint();}
+ Canvas {
+  id:drawing
+  readonly property real rasterScale:Math.max(1,Screen.devicePixelRatio)*2
+  width:root.width*rasterScale;height:root.height*rasterScale
+  transformOrigin:Item.TopLeft;scale:1/rasterScale;smooth:true
   onPaint: {
     const c=getContext("2d"); c.reset(); c.scale(width/64,height/64);
     c.lineCap="round"; c.lineJoin="round";
@@ -123,4 +130,5 @@ Canvas {
       if(condition.indexOf("lightning")>=0)plate([[34,41],[26,52],[33,52],[30,61],[43,47],[35,47]],"#fff3b8","#e5bb69");
     }
   }
+}
 }

@@ -118,6 +118,7 @@ Window {
 
   // ── widget factory: config names → components (same names as Noctalia) ───
   readonly property var widgetComponents: ({
+    "shutdown-timer":shutdownTimerComponent,
     "launcher": launcherComponent,
     "workspaces": workspacesComponent,
     "clock": clockComponent,
@@ -139,6 +140,7 @@ Window {
     "tray": trayComponent,
   })
 
+  Component {id:shutdownTimerComponent;ShutdownTimerWidget {}}
   Component { id: launcherComponent; LauncherWidget {} }
   Component { id: runningAppsComponent; RunningAppsWidget {} }
   Component { id: workspacesComponent; WorkspacesWidget {} }
@@ -240,7 +242,7 @@ Window {
 
     Section {
       id: endSection
-      names: barWindow.widgetLayout.end
+      names: ["shutdown-timer"].concat(barWindow.widgetLayout.end.filter(n=>n!=="shutdown-timer"))
       anchors.right: parent.right
       anchors.rightMargin: barWindow.padding - Style.barCapsulePadding
       anchors.verticalCenter: parent.verticalCenter

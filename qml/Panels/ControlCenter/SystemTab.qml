@@ -2,11 +2,18 @@ import QtQuick
 import Noctalia
 import "../../Commons"
 import "../../Widgets"
+import "../../Settings"
 
 // CPU, memory, disk and uptime.
-Column {
+Flickable {
   id: tab
-  spacing: Style.spaceMd
+  contentHeight: stats.height
+  clip: true
+  boundsBehavior: Flickable.StopAtBounds
+  Column {
+    id: stats
+    width: tab.width - 18
+    spacing: Style.spaceMd
 
   Component.onCompleted: SystemMonitor.acquire()
   Component.onDestruction: SystemMonitor.release()
@@ -21,7 +28,7 @@ Column {
     property string label
     property string valueText
     property real fraction
-    width: tab.width
+    width: stats.width
     height: 86
 
     NGlyph {
@@ -57,7 +64,7 @@ Column {
 
   // CPU with a small history graph
   NCard {
-    width: tab.width
+    width: stats.width
     height: 140
 
     NGlyph {
@@ -92,7 +99,7 @@ Column {
         model: SystemMonitor.cpuHistory
         delegate: Rectangle {
           required property var modelData
-          width: (tab.width - 2 * Style.panelPadding - 39 * 2) / 40
+          width: (stats.width - 2 * Style.panelPadding - 39 * 2) / 40
           height: Math.max(2, 70 * modelData / 100)
           anchors.bottom: parent.bottom
           radius: 2
@@ -105,17 +112,17 @@ Column {
   Stat {
     icon: "memory"
     label: "Memória"
-    valueText: tab.gb(SystemMonitor.memUsed) + " de " + tab.gb(SystemMonitor.memTotal)
+    valueText: stats.gb(SystemMonitor.memUsed) + " de " + stats.gb(SystemMonitor.memTotal)
     fraction: SystemMonitor.memTotal > 0 ? SystemMonitor.memUsed / SystemMonitor.memTotal : 0
   }
   Stat {
     icon: "storage"
     label: "Disco do sistema"
-    valueText: tab.gb(SystemMonitor.diskUsed) + " de " + tab.gb(SystemMonitor.diskTotal)
+    valueText: stats.gb(SystemMonitor.diskUsed) + " de " + stats.gb(SystemMonitor.diskTotal)
     fraction: SystemMonitor.diskTotal > 0 ? SystemMonitor.diskUsed / SystemMonitor.diskTotal : 0
   }
   NCard {
-    width: tab.width
+    width: stats.width
     height: 56
     NGlyph {
       id: upIcon
@@ -144,4 +151,48 @@ Column {
       }
     }
   }
+
+  NCard {
+    width:stats.width
+    height: shutdownControls.height + 2 * padding
+    Column {
+      id:shutdownControls
+      width:parent.width
+      spacing:Style.spaceSm
+      property int hours:0
+      property int minutes:30
+      NSectionTitle {text:"Desligamento automático"}
+      Row {
+        spacing:Style.spaceMd
+        NText {text:"Comandos por voz (PC)";height:32;verticalAlignment:Text.AlignVCenter}
+        NToggle {checked:ShutdownTimer.voiceEnabled;onToggled:on=>ShutdownTimer.setVoiceEnabled(on)}
+      }
+      NText {
+        width:parent.width;wrapMode:Text.WordWrap;font.pixelSize:Style.fontSizeCaption
+        text:!ShutdownTimer.voiceEnabled ? "Voz desligada: microfone fechado." : ShutdownTimer.voiceStatus==="listening" ? "Ouvindo: PC, desligar em uma hora. PC, cancelar. PC, desativar comandos de voz." : ShutdownTimer.voiceStatus==="loading" ? "Preparando reconhecimento local…" : ShutdownTimer.voiceStatus==="error" ? "Não foi possível iniciar a voz. Confira o microfone e a permissão do Windows." : "Aguardando serviço de voz…"
+        color:Theme.colors.onSurfaceVariant
+      }
+
+      NText {width:parent.width;wrapMode:Text.WordWrap;text:ShutdownTimer.active ? "Desligar em " + ShutdownTimer.countdown : "Escolha o tempo até desligar o PC."}
+      Row {
+        spacing:Style.spaceSm
+        NText {text:"Horas";height:32;verticalAlignment:Text.AlignVCenter}
+        NumberBox {value:shutdownControls.hours;from:0;to:24;onEdited:v=>shutdownControls.hours=v}
+        NText {text:"Min";height:32;verticalAlignment:Text.AlignVCenter}
+        NumberBox {value:shutdownControls.minutes;from:0;to:59;onEdited:v=>shutdownControls.minutes=v}
+      }
+      NListItem {
+        width:parent.width; icon:"clock";title:ShutdownTimer.active ? "Substituir agendamento" : "Agendar desligamento"
+        onClicked:ShutdownTimer.schedule(shutdownControls.hours*60+shutdownControls.minutes)
+      }
+      NListItem {
+        width:parent.width;icon:"x";title:"Cancelar desligamento";visible:ShutdownTimer.active
+        onClicked:ShutdownTimer.cancel()
+      }
+      NText {width:parent.width;wrapMode:Text.WordWrap;text:ShutdownTimer.message;color:Theme.colors.onSurfaceVariant;visible:text.length>0}
+      NText {width:parent.width;wrapMode:Text.WordWrap;font.pixelSize:Style.fontSizeCaption;color:Theme.colors.onSurfaceVariant;text:"Funciona com o painel fechado. O Vitória precisa permanecer aberto. Salve seus arquivos: o Windows pode impedir o desligamento se algum programa pedir confirmação."}
+    }
+  }
+  }
+  ViewportScrollBar {target:tab;anchors.right:parent.right;anchors.top:parent.top;anchors.bottom:parent.bottom}
 }

@@ -12,7 +12,7 @@ PanelWindow {
 
   panelName: "control-center"
   placement: "bar"
-  panelWidth: 700
+  panelWidth: 832
   panelHeight: 560
 
   readonly property var tabs: [
@@ -28,8 +28,6 @@ PanelWindow {
     { key: "weather", title: "Clima", icon: "weather-cloud-sun", source: "WeatherTab.qml" },
     { key: "calendar", title: "Calendário", icon: "calendar-event", source: "CalendarTab.qml" },
   ]
-  NTooltip { id: categoryTip }
-  onShownChanged: if (!shown) categoryTip.hide()
   property string currentTab: "home"
   readonly property var currentMeta: tabs.find(t => t.key === currentTab) ?? tabs[0]
 
@@ -48,7 +46,7 @@ PanelWindow {
     // ── sidebar ──────────────────────────────────────────────────────────────
     Rectangle {
       id: sidebar
-      width: 32 + 2 * Style.spaceMd
+      width: 178
       anchors.top: parent.top
       anchors.bottom: parent.bottom
       anchors.left: parent.left
@@ -65,34 +63,51 @@ PanelWindow {
           model: cc.tabs
           delegate: Rectangle {
             id: tabButton
+            objectName:"cc-category-"+modelData.key
             required property var modelData
             Accessible.name: modelData.title
             Accessible.role: Accessible.Button
             readonly property bool isCurrent: cc.currentTab === modelData.key
             readonly property bool hovered: tabMouse.containsMouse
-            width: 32 + Style.spaceXs * 2
+            width: sidebar.width - 16
             height: 32 + Style.spaceXs * 2
             radius: Style.radiusLg
-            color: isCurrent ? Theme.colors.primary : hovered ? Theme.colors.hover : "transparent"
+            color: "transparent"
+            border.width:1
+            border.color:isCurrent ? Theme.colors.primary : hovered ? Style.alpha(Theme.colors.primary,0.65) : Style.alpha(Theme.colors.outlineVariant,0.20)
 
-            Behavior on color {
+            Behavior on border.color {
               ColorAnimation { duration: Style.animFast; easing.type: Easing.OutCubic }
             }
 
-            NGlyph {
-              anchors.centerIn: parent
-              icon: tabButton.modelData.icon
-              size: 21
-              color: tabButton.isCurrent ? Theme.colors.onPrimary : tabButton.hovered ? Theme.colors.onHover : Theme.colors.onSurface
+            Rectangle {
+              id:iconTile
+              width:30;height:30;radius:9
+              anchors.left:parent.left;anchors.leftMargin:9;anchors.verticalCenter:parent.verticalCenter
+              gradient:Gradient {
+                GradientStop {position:0;color:Style.alpha(Theme.colors.primary,0.12)}
+                GradientStop {position:1;color:Style.alpha(Theme.colors.primary,0.03)}
+              }
+              border.width:1;border.color:Style.alpha(Theme.colors.primary,0.12)
+              CategoryIcon {
+                anchors.centerIn:parent;width:21;height:21;category:tabButton.modelData.key
+                ink:Theme.colors.onSurfaceVariant
+              }
+            }
+            NText {
+              anchors.left:iconTile.right;anchors.leftMargin:10;anchors.right:parent.right;anchors.rightMargin:5
+              anchors.verticalCenter:parent.verticalCenter
+              text:tabButton.modelData.title
+              font.pixelSize:13;font.weight:tabButton.isCurrent?Font.DemiBold:Font.Medium
+              color:Theme.colors.onSurface
+              elide:Text.ElideRight
             }
             MouseArea {
               id: tabMouse
               anchors.fill: parent
               hoverEnabled: true
               cursorShape: Qt.PointingHandCursor
-              onEntered: categoryTip.show(tabButton, tabButton.modelData.title, true)
-              onExited: categoryTip.hide()
-              onClicked: { categoryTip.hide(); cc.currentTab = tabButton.modelData.key; }
+              onClicked: cc.currentTab = tabButton.modelData.key
             }
           }
         }

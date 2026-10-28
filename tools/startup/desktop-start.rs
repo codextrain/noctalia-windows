@@ -10,7 +10,9 @@ fn main(){let base=std::env::current_exe().unwrap().parent().unwrap().to_owned()
  let shell=base.join("Noctalia-DragDrop");let exe=fs::read_to_string(shell.join("runtime-path.txt"))?;let exe=Path::new(exe.trim());
  if !running("noctalia.exe") {
   fs::create_dir_all(shell.join("logs"))?;
-  let p=command(exe).env("NOCTALIA_QML_DIR",shell.join("source/qml")).env("NOCTALIA_OPEN","").env("NOCTALIA_SETTINGS_PAGE","").env("NOCTALIA_NIRIWIN_STATUS",uri(&base.join("NiriWin/state/status.json"))).env("NOCTALIA_GPU_STATE",uri(&shell.join("gpu-state.json"))).env("QML_XHR_ALLOW_FILE_READ","1").stderr(fs::File::create(shell.join("logs/noctalia-error.log"))?).spawn()?;
+  let p=command(exe).env("NOCTALIA_VOICE_STATE",uri(&shell.join("voice-state.json"))).env("NOCTALIA_QML_DIR",shell.join("source/qml")).env("NOCTALIA_OPEN","").env("NOCTALIA_SETTINGS_PAGE","").env("NOCTALIA_NIRIWIN_STATUS",uri(&base.join("NiriWin/state/status.json"))).env("NOCTALIA_GPU_STATE",uri(&shell.join("gpu-state.json"))).env("QML_XHR_ALLOW_FILE_READ","1").stderr(fs::File::create(shell.join("logs/noctalia-error.log"))?).spawn()?;
+  let voice=shell.join("vitoria-voice/vitoria-voice.exe");
+  if voice.exists(){command(&voice).arg("--parent").arg(p.id().to_string()).arg("--state").arg(shell.join("voice-state.json")).arg("--model").arg(shell.join("voice-model/vosk-model-small-pt-0.3")).arg("--config").arg(Path::new(&std::env::var("LOCALAPPDATA")?).join("noctalia-win/config.json")).spawn()?;}
   let gpu=shell.join("noctalia-gpu.exe");if gpu.exists(){command(&gpu).arg("--parent").arg(p.id().to_string()).arg("--state").arg(shell.join("gpu-state.json")).spawn()?;}
  }
  let niri=base.join("NiriWin");let exe=niri.join("niriwin.exe");
