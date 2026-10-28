@@ -60,6 +60,16 @@ Column {
       NToggle { checked: Config.windows.transparency_enabled ?? false; onToggled: on => Config.setValue("windows.transparency_enabled",on) }
     }
     SettingRow {
+      label: "Sistema e outros aplicativos"
+      description: "Aplica a transparência no Explorador de Arquivos e nos demais programas, exceto navegadores, jogos protegidos e exceções."
+      NToggle { enabled:Config.windows.transparency_enabled ?? false; checked:Config.windows.transparency_system_enabled ?? true; onToggled:on=>Config.setValue("windows.transparency_system_enabled",on) }
+    }
+    SettingRow {
+      label: "Navegadores"
+      description: "Transparência no Chrome, Edge, Firefox, Brave e similares. Desligada por padrão para evitar problemas de exibição."
+      NToggle { enabled:Config.windows.transparency_enabled ?? false; checked:Config.windows.transparency_browsers_enabled ?? false; onToggled:on=>Config.setValue("windows.transparency_browsers_enabled",on) }
+    }
+    SettingRow {
       label: "Transparência (%)"
       description: "0% = opaca. Sugestão: 8%. O texto também fica transparente. Máximo de 30%."
       NumberBox { value: Config.windows.transparency_percent ?? 8; from:0; to:30; step:1; onEdited: value => Config.setValue("windows.transparency_percent",value) }

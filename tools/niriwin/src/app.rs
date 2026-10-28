@@ -1057,11 +1057,13 @@ pub fn main() -> Result<(), String> {
                             && w.valid()
                             && !w.parked
                             && !is_noctalia(w.h)
-                            && !crate::appearance::opaque_app(
-                                &opacity_config,
-                                &process_path(w.h),
-                                now,
-                            )
+                            && {
+                                let path = process_path(w.h);
+                                crate::appearance::transparency_category_allowed(
+                                    &opacity_config,
+                                    &path,
+                                ) && !crate::appearance::opaque_app(&opacity_config, &path, now)
+                            }
                             && unsafe { IsIconic(w.h) } == 0
                             && ms.iter().any(|m| {
                                 m.id == unsafe { MonitorFromWindow(w.h, 2) } && !protected(w.h, m)

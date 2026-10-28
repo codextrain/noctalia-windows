@@ -208,6 +208,38 @@ mod tests {
     }
 }
 
+// Browser classification uses executable identity, not the window title.
+pub fn transparency_category_allowed(root: &serde_json::Value, path: &str) -> bool {
+    let path = path.replace('/', "\\").to_lowercase();
+    let exe = path.rsplit('\\').next().unwrap_or("");
+    if exe.is_empty() {
+        return false;
+    }
+    let browser = [
+        "chrome.exe",
+        "msedge.exe",
+        "firefox.exe",
+        "brave.exe",
+        "opera.exe",
+        "vivaldi.exe",
+        "chromium.exe",
+        "waterfox.exe",
+        "floorp.exe",
+        "librewolf.exe",
+        "zen.exe",
+        "arc.exe",
+        "browser.exe",
+    ]
+    .contains(&exe);
+    let key = if browser {
+        "/windows/transparency_browsers_enabled"
+    } else {
+        "/windows/transparency_system_enabled"
+    };
+    root.pointer(key)
+        .and_then(|v| v.as_bool())
+        .unwrap_or(!browser)
+}
 // Media sessions identify an app, not a browser tab/window: protect all its windows.
 pub fn opaque_app(root: &serde_json::Value, path: &str, now: u64) -> bool {
     let path = path.replace('/', "\\").to_lowercase();
@@ -275,6 +307,34 @@ pub fn opaque_app(root: &serde_json::Value, path: &str, now: u64) -> bool {
 #[cfg(test)]
 mod opacity_policy_tests {
     use super::*;
+    #[test]
+    fn system_and_browser_switches_are_independent() {
+        for system in [false, true] {
+            for browser in [false, true] {
+                let r = serde_json::json!({"windows":{"transparency_system_enabled":system,"transparency_browsers_enabled":browser}});
+                assert_eq!(
+                    transparency_category_allowed(&r, "C:/Windows/explorer.exe"),
+                    system
+                );
+                assert_eq!(
+                    transparency_category_allowed(&r, "C:/Apps/Chrome.EXE"),
+                    browser
+                );
+                assert_eq!(
+                    transparency_category_allowed(&r, "C:/Apps/msedge.exe"),
+                    browser
+                );
+                assert_eq!(
+                    transparency_category_allowed(&r, "C:/Apps/firefox.exe"),
+                    browser
+                );
+            }
+        }
+        let r = serde_json::json!({});
+        assert!(!transparency_category_allowed(&r, "C:/Apps/brave.exe"));
+        assert!(transparency_category_allowed(&r, "C:/Windows/notepad.exe"));
+        assert!(!transparency_category_allowed(&r, ""));
+    }
     #[test]
     fn media_pause_expiry_games_and_exceptions() {
         let mut r = serde_json::json!({"windows":{"media_protection_json":serde_json::json!({"playing":true,"appId":"Chrome","updatedAt":10000}).to_string(),"transparency_excluded_apps":"custom-game.exe; mpv.exe"}});
