@@ -8,8 +8,13 @@ use std::{
 #[link(name = "user32")]
 extern "system" {
     fn SetWindowLongW(h: Handle, index: i32, value: i32) -> i32;
+    fn GetLayeredWindowAttributes(h: Handle, key: *mut u32, alpha: *mut u8, flags: *mut u32)
+        -> i32;
     fn SetLayeredWindowAttributes(h: Handle, key: u32, alpha: u8, flags: u32) -> i32;
 }
+
+#[cfg(test)]
+static APPLY_COUNT: std::sync::atomic::AtomicUsize = std::sync::atomic::AtomicUsize::new(0);
 
 struct Original {
     pid: u32,
@@ -87,13 +92,20 @@ impl Transparency {
             if pid(h) == o.pid && class(h) == o.class {
                 unsafe {
                     let current = GetWindowLongW(h, -20);
-                    SetWindowLongW(h, -20, current | 0x80000);
-                    SetLayeredWindowAttributes(
-                        h,
-                        0,
-                        ((100 - percent.min(30)) as u16 * 255 / 100) as u8,
-                        2,
-                    );
+                    let desired = ((100 - percent.min(30)) as u16 * 255 / 100) as u8;
+                    let (mut key, mut alpha, mut flags) = (0, 0, 0);
+                    let unchanged = current & 0x80000 != 0
+                        && GetLayeredWindowAttributes(h, &mut key, &mut alpha, &mut flags) != 0
+                        && flags == 2
+                        && alpha == desired;
+                    if !unchanged {
+                        if current & 0x80000 == 0 {
+                            SetWindowLongW(h, -20, current | 0x80000);
+                        }
+                        #[cfg(test)]
+                        APPLY_COUNT.fetch_add(1, std::sync::atomic::Ordering::SeqCst);
+                        SetLayeredWindowAttributes(h, 0, desired, 2);
+                    }
                 }
             }
         }
@@ -205,6 +217,21 @@ mod tests {
                 0
             );
             assert_eq!(alpha, 234);
+            let applied = APPLY_COUNT.load(std::sync::atomic::Ordering::SeqCst);
+            for _ in 0..200 {
+                fx.update(&targets, 8).unwrap();
+            }
+            assert_eq!(
+                APPLY_COUNT.load(std::sync::atomic::Ordering::SeqCst),
+                applied,
+                "unchanged polling must not reapply style/alpha"
+            );
+            fx.update(&targets, 9).unwrap();
+            assert_eq!(
+                APPLY_COUNT.load(std::sync::atomic::Ordering::SeqCst),
+                applied + 1
+            );
+
             assert!(path.exists());
             fx.restore().unwrap();
             assert_eq!(GetWindowLongW(h, -20) & 0x80000, 0);
