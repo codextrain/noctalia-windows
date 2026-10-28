@@ -14,6 +14,7 @@ function forGlyph(icon) {
     if(icon==="temperature")return "temperature";
     if(icon==="droplet")return "droplet";
     if(icon==="wind")return "wind";
+    if(icon==="vitoria-wolf")return "wolf";
     if(icon==="vitoria-cat")return "cat";
     if(icon==="search")return "search";
     if(icon==="shutdown")return "power";

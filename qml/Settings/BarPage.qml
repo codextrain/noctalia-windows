@@ -20,7 +20,7 @@ Column {
     { key: "brightness", text: "Brilho", icon: "brightness-high" }, { key: "battery", text: "Bateria", icon: "battery-4" },
     { key: "weather", text: "Clima", icon: "weather-cloud-sun" }, { key: "sysmon", text: "Monitor do sistema", icon: "cpu-usage" },
     { key: "tray", text: "Bandeja", icon: "chevron-up" },
-    { key: "control-center", text: "Central de controle", icon: "vitoria-cat" }, { key: "session", text: "Sessão", icon: "shutdown" },
+    { key: "control-center", text: "Central de controle", icon: "vitoria-wolf" }, { key: "session", text: "Sessão", icon: "shutdown" },
   ]
   function meta(key) { return allWidgets.find(w => w.key === key) ?? { key: key, text: key, icon: "apps" }; }
   readonly property var layout: BarLayout.read(Config.bar)

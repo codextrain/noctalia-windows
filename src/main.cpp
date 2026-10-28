@@ -75,7 +75,7 @@ int main(int argc, char* argv[]) {
   QGuiApplication app(argc, argv);
   QGuiApplication::setApplicationName("noctalia-win");
   QGuiApplication::setApplicationDisplayName("Vitória Shell");
-  QGuiApplication::setWindowIcon(QIcon(":/assets/vitoria-cat.svg"));
+  QGuiApplication::setWindowIcon(QIcon(":/assets/vitoria-wolf.png"));
   QGuiApplication::setApplicationVersion(NOCTALIA_WIN_VERSION);
   QGuiApplication::setQuitOnLastWindowClosed(false);
 

@@ -23,11 +23,12 @@ Text {
   height: Math.round(size)
   SculptedIcon {
     anchors.fill:parent
-    visible:root.sculptedSymbol.length>0
+    visible:root.sculptedSymbol.length>0 && root.sculptedSymbol!=="wolf"
     symbol:root.sculptedSymbol
     condition:root.icon
     disabled:root.icon.indexOf("mute")>=0||root.icon.indexOf("-off")>=0
   }
+  Loader {anchors.fill:parent;active:root.sculptedSymbol==="wolf";sourceComponent:Component {WolfIcon {}}}
   Behavior on color {
     ColorAnimation { duration: Style.animFast; easing.type: Easing.OutCubic }
   }
