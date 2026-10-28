@@ -1,0 +1,15 @@
+# Transparência e início sem console
+
+Personalização > Aparência > Janelas dos aplicativos: transparência opcional de 0 a 30%, sugerido 8%. A transparência afeta também texto e conteúdo, sem adicionar desfoque. O NiriWin aplica somente às janelas gerenciadas, visíveis, fora de tela cheia e sem camada de transparência própria. Noctalia fica excluído. Desativar, pausar, encerrar normalmente ou executar --recover restaura o estado. Falhas de restauração conservam opacity-recovery.json para nova tentativa. Uma interrupção forçada exige recuperação.
+
+Novo iniciador nativo em tools/startup/desktop-start.rs: compilar no Windows com rustc --edition 2021 -O desktop-start.rs -o Vitoria-Start.exe. Deve ficar junto às pastas Noctalia-DragDrop e NiriWin no layout de instalação utilizado neste PC. Usa runtime-path.txt e mantém as substituições QML e o agente GPU. A tarefa de logon existente aponta diretamente para esse iniciador; não abre PowerShell nem console. Não troca o Explorer. O caminho de instalação e a tarefa são locais, não incluídos no repositório.
+
+Validação executada em 28/10/2026: 25 testes do binário, incluindo janela Win32 própria para aplicar alpha 234 (8%), restaurar, recuperar diário e preservar alpha próprio de aplicativo. Clippy com testes sem avisos. Inicialização real sem os dois processos ativos: iniciador concluiu em 159 ms; ambos observados em aproximadamente 1,3 s após solicitar a tarefa. Isso não mede a primeira pintura nem o tempo desde ligar o computador. Nenhum novo reinício foi executado.
+
+O comando genérico cargo test também tenta compilar um exemplo smoke antigo que referencia layout::layout fora de cfg(test) e falha. A suíte validada usa cargo test --bin niriwin.
+
+Proteção de vídeos e jogos: a sessão de mídia atual do Windows informa reprodução e aplicativo. Enquanto reproduz, todas as janelas daquele aplicativo ficam opacas (a API não identifica qual aba ou janela contém o vídeo). Pausar restaura a transparência, com atualização em poucos segundos. Áudio/música também ativa essa proteção. Aplicativos que não publicam uma sessão de mídia podem ser incluídos manualmente em Aplicativos sempre opacos. Múltiplas reproduções simultâneas dependem da sessão escolhida pelo Windows.
+
+Jogos em tela cheia continuam protegidos pelo retângulo do monitor. Para jogos em janela, reconhecimento por caminho de instalação (Steam, Epic Games, GOG Games, XboxGames, Riot Games, Games) e alguns executáveis conhecidos; não é detecção universal. Outros jogos devem ser incluídos por nome do executável na opção Aplicativos sempre opacos. Nenhuma leitura de memória nem injeção no jogo.
+
+Validação adicional: 26 testes do binário passaram, incluindo reprodução/pausa, expiração de sessão, reconhecimento de caminho Steam, exceção manual e preservação de outros aplicativos. Clippy com testes passou. Não foram executados Netflix, Twitch nem jogos reais durante esta validação.

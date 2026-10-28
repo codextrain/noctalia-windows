@@ -413,3 +413,22 @@ pub fn windows() -> Vec<Handle> {
     unsafe { EnumWindows(cb, &mut v as *mut _ as isize) };
     v
 }
+
+// Read only the executable path; no game memory or hooks.
+pub fn process_path(h: Handle) -> String {
+    unsafe {
+        let process = OpenProcess(0x1000, 0, pid(h));
+        if process == 0 {
+            return String::new();
+        }
+        let mut name = [0u16; 32768];
+        let mut len = name.len() as u32;
+        let ok = QueryFullProcessImageNameW(process, 0, name.as_mut_ptr(), &mut len) != 0;
+        CloseHandle(process);
+        if ok {
+            String::from_utf16_lossy(&name[..len as usize]).to_lowercase()
+        } else {
+            String::new()
+        }
+    }
+}

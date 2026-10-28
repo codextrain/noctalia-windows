@@ -15,7 +15,13 @@ QtObject {
   }
   property Timer borderPaletteSave: Timer { interval:200; onTriggered:styleRoot.publishBorderPalette() }
   property Connections borderThemeChanges: Connections { target:Theme; function onChanged(){styleRoot.borderPaletteSave.restart();} }
-  Component.onCompleted: borderPaletteSave.start()
+  function publishMediaProtection() {
+    const value=JSON.stringify({playing:!!(Media.available && Media.playing), appId:String(Media.appId || ""), updatedAt:Date.now()});
+    Config.setValue("windows.media_protection_json",value);
+  }
+  property Timer mediaProtectionHeartbeat: Timer { interval:2000; running:Media.available && Media.playing; repeat:true; onTriggered:styleRoot.publishMediaProtection() }
+  property Connections mediaProtectionChanges: Connections { target:Media; function onChanged(){styleRoot.publishMediaProtection();} }
+  Component.onCompleted: { borderPaletteSave.start(); publishMediaProtection(); }
   // The current Qt runtime paints white margins with system acrylic.
   // Preserve the configured shell backgrounds until a compatible renderer exists.
   readonly property bool glassActive: false

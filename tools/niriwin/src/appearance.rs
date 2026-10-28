@@ -207,3 +207,90 @@ mod tests {
         assert_eq!(radius(100, 20, 10), 5);
     }
 }
+
+// Media sessions identify an app, not a browser tab/window: protect all its windows.
+pub fn opaque_app(root: &serde_json::Value, path: &str, now: u64) -> bool {
+    let path = path.replace('/', "\\").to_lowercase();
+    let exe = path.rsplit('\\').next().unwrap_or("");
+    if exe.is_empty() {
+        return false;
+    }
+    if root
+        .pointer("/windows/transparency_excluded_apps")
+        .and_then(|v| v.as_str())
+        .unwrap_or("")
+        .split([',', ';', '\n'])
+        .any(|v| v.trim().eq_ignore_ascii_case(exe))
+    {
+        return true;
+    }
+    if [
+        "\\steamapps\\common\\",
+        "\\epic games\\",
+        "\\gog games\\",
+        "\\xboxgames\\",
+        "\\riot games\\",
+        "\\games\\",
+    ]
+    .iter()
+    .any(|v| path.contains(v))
+        || [
+            "cs2.exe",
+            "valorant-win64-shipping.exe",
+            "fortniteclient-win64-shipping.exe",
+            "minecraft.windows.exe",
+        ]
+        .contains(&exe)
+    {
+        return true;
+    }
+    let state = root
+        .pointer("/windows/media_protection_json")
+        .and_then(|v| v.as_str())
+        .and_then(|v| serde_json::from_str::<serde_json::Value>(v).ok())
+        .unwrap_or_default();
+    if state["playing"].as_bool() != Some(true)
+        || !state["updatedAt"]
+            .as_u64()
+            .is_some_and(|t| now >= t && now - t <= 6000)
+    {
+        return false;
+    }
+    let app = state["appId"].as_str().unwrap_or("").to_lowercase();
+    let stem = exe.strip_suffix(".exe").unwrap_or(exe);
+    // Browser AUMIDs vary (Chrome, Chrome.exe, MSEdge, package identifiers).
+    app.contains(stem)
+        || (exe == "msedge.exe" && app.contains("microsoftedge"))
+        || (app.is_empty()
+            && [
+                "chrome.exe",
+                "msedge.exe",
+                "firefox.exe",
+                "brave.exe",
+                "opera.exe",
+                "netflix.exe",
+            ]
+            .contains(&exe))
+}
+#[cfg(test)]
+mod opacity_policy_tests {
+    use super::*;
+    #[test]
+    fn media_pause_expiry_games_and_exceptions() {
+        let mut r = serde_json::json!({"windows":{"media_protection_json":serde_json::json!({"playing":true,"appId":"Chrome","updatedAt":10000}).to_string(),"transparency_excluded_apps":"custom-game.exe; mpv.exe"}});
+        assert!(opaque_app(&r, "C:/Apps/chrome.exe", 11000));
+        assert!(!opaque_app(&r, "C:/Apps/notepad.exe", 11000));
+        assert!(!opaque_app(&r, "C:/Apps/chrome.exe", 18000));
+        assert!(opaque_app(
+            &r,
+            "D:/Steam/steamapps/common/Game/game.exe",
+            18000
+        ));
+        assert!(opaque_app(&r, "C:/Apps/custom-game.exe", 18000));
+        r["windows"]["media_protection_json"] =
+            serde_json::json!({"playing":false,"appId":"Chrome","updatedAt":10000})
+                .to_string()
+                .into();
+        assert!(!opaque_app(&r, "C:/Apps/chrome.exe", 11000));
+    }
+}

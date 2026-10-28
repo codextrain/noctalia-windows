@@ -12,6 +12,8 @@ mod spotlight;
 #[cfg(windows)]
 mod taskbar;
 #[cfg(windows)]
+mod transparency;
+#[cfg(windows)]
 mod win;
 fn main() {
     #[cfg(windows)]

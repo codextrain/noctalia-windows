@@ -55,6 +55,21 @@ Column {
       NToggle { checked: Config.wallpaper.transition_enabled ?? true; onToggled: on => Config.setValue("wallpaper.transition_enabled",on) }
     }
     SettingRow {
+      label: "Transparência leve das janelas"
+      description: "Deixa o fundo aparecer através dos aplicativos. Desativar ou pausar o NiriWin restaura a opacidade. Tela cheia e janelas com transparência própria são preservadas."
+      NToggle { checked: Config.windows.transparency_enabled ?? false; onToggled: on => Config.setValue("windows.transparency_enabled",on) }
+    }
+    SettingRow {
+      label: "Transparência (%)"
+      description: "0% = opaca. Sugestão: 8%. O texto também fica transparente. Máximo de 30%."
+      NumberBox { value: Config.windows.transparency_percent ?? 8; from:0; to:30; step:1; onEdited: value => Config.setValue("windows.transparency_percent",value) }
+    }
+    SettingRow {
+      label: "Aplicativos sempre opacos"
+      description: "Vídeos em reprodução e jogos reconhecidos ficam opacos automaticamente. Para outros jogos em janela, informe os executáveis separados por vírgula. Ex.: meu-jogo.exe, mpv.exe"
+      TextBox { width:220; value:Config.windows.transparency_excluded_apps ?? ""; onEdited:value=>Config.setValue("windows.transparency_excluded_apps",value) }
+    }
+    SettingRow {
       label: "Blur dos aplicativos compatíveis"
       description: "O Noctalia fica excluído para evitar margens brancas. Aplicativos com fundo opaco podem não mostrar o efeito."
       NToggle { checked: Config.windows.blur_enabled ?? false; onToggled: enabled => appearancePage.setBlurEnabled(enabled) }

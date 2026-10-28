@@ -327,6 +327,7 @@ pub fn main() -> Result<(), String> {
     fs::create_dir_all(&state).map_err(|e| e.to_string())?;
     let journal = state.join("recovery.tsv");
     let blur_journal = state.join("blur-recovery.json");
+    let opacity_journal = state.join("opacity-recovery.json");
     let taskbar_journal = state.join("taskbar-recovery.json");
     let control = state.join("command.txt");
     if let Some(cmd) = command {
@@ -337,6 +338,7 @@ pub fn main() -> Result<(), String> {
     if recover {
         crate::taskbar::recover(&taskbar_journal)?;
         crate::effects::recover(&blur_journal)?;
+        crate::transparency::Transparency::recover(opacity_journal)?;
         if !journal.exists() {
             println!("No recovery journal.");
             return Ok(());
@@ -376,7 +378,11 @@ pub fn main() -> Result<(), String> {
         }
         return Ok(());
     }
-    if journal.exists() || blur_journal.exists() || taskbar_journal.exists() {
+    if journal.exists()
+        || blur_journal.exists()
+        || taskbar_journal.exists()
+        || opacity_journal.exists()
+    {
         return Err("recovery journal exists: run --recover first".into());
     }
     let mut keys = Hotkeys(Vec::new());
@@ -400,6 +406,7 @@ pub fn main() -> Result<(), String> {
     println!("NiriWin running. Ctrl+Alt+Shift+P restores/pauses; Ctrl+Alt+Shift+Q restores/exits.");
     let mut v: Vec<Saved> = Vec::new();
     let mut blur = crate::effects::Blur::new(blur_journal);
+    let mut opacity = crate::transparency::Transparency::new(opacity_journal);
     let mut taskbar = crate::taskbar::Taskbar::new(taskbar_journal);
     let mut blur_settings = crate::appearance::BlurSettings {
         enabled: false,
@@ -464,6 +471,7 @@ pub fn main() -> Result<(), String> {
                         "pause" | "toggle" if !paused => {
                             taskbar.restore()?;
                             blur.restore()?;
+                            opacity.restore()?;
                             if !restore(&v) {
                                 return Err("pause restoration failed".into());
                             }
@@ -1021,6 +1029,47 @@ pub fn main() -> Result<(), String> {
                     blur_targets.retain(|h| !is_noctalia(*h));
                 }
                 blur.update(&blur_targets)?;
+                let opacity_config = fs::read_to_string(&noctalia_config)
+                    .ok()
+                    .and_then(|s| serde_json::from_str::<serde_json::Value>(&s).ok())
+                    .unwrap_or_default();
+                let now = std::time::SystemTime::now()
+                    .duration_since(std::time::UNIX_EPOCH)
+                    .unwrap_or_default()
+                    .as_millis() as u64;
+                let percent = if opacity_config
+                    .pointer("/windows/transparency_enabled")
+                    .and_then(|v| v.as_bool())
+                    == Some(true)
+                {
+                    opacity_config
+                        .pointer("/windows/transparency_percent")
+                        .and_then(|v| v.as_u64())
+                        .unwrap_or(8)
+                        .min(30) as u8
+                } else {
+                    0
+                };
+                let targets = v
+                    .iter()
+                    .filter(|w| {
+                        !paused
+                            && w.valid()
+                            && !w.parked
+                            && !is_noctalia(w.h)
+                            && !crate::appearance::opaque_app(
+                                &opacity_config,
+                                &process_path(w.h),
+                                now,
+                            )
+                            && unsafe { IsIconic(w.h) } == 0
+                            && ms.iter().any(|m| {
+                                m.id == unsafe { MonitorFromWindow(w.h, 2) } && !protected(w.h, m)
+                            })
+                    })
+                    .map(|w| w.h)
+                    .collect();
+                opacity.update(&targets, percent)?;
                 mouse.configure(
                     !paused && c.navigation_modifiers == 8,
                     !paused && decoration.spotlight,
@@ -1078,6 +1127,7 @@ pub fn main() -> Result<(), String> {
     mouse.update([]);
     let taskbar_error = taskbar.restore().err();
     let blur_error = blur.restore().err();
+    let opacity_error = opacity.restore().err();
     let restored = restore(&v);
     if restored {
         let _ = fs::remove_file(&journal);
@@ -1096,6 +1146,9 @@ pub fn main() -> Result<(), String> {
             if let Some(error) = blur_error {
                 return Err(error);
             }
+            if let Some(error) = opacity_error {
+                return Err(error);
+            }
             if !restored {
                 return Err("restore failed: journal retained".into());
             }
@@ -1107,6 +1160,20 @@ pub fn main() -> Result<(), String> {
 fn window_title_length(h: Handle) -> i32 {
     unsafe { GetWindowTextLengthW(h) }
 }
+fn json_string(value: &str) -> String {
+    let mut result = String::from("\"");
+    for ch in value.chars() {
+        match ch {
+            '\\' => result.push_str("\\\\"),
+            '"' => result.push_str("\\\""),
+            c if c.is_control() => result.push_str(&format!("\\u{:04x}", c as u32)),
+            c => result.push(c),
+        }
+    }
+    result.push('"');
+    result
+}
+
 #[cfg(test)]
 mod workspace_tests {
     use super::workspace_member;
@@ -1145,17 +1212,4 @@ mod workspace_tests {
         assert!(workspace_member(true, false, true, false));
         assert!(!workspace_member(true, true, true, true));
     }
-}
-fn json_string(value: &str) -> String {
-    let mut result = String::from("\"");
-    for ch in value.chars() {
-        match ch {
-            '\\' => result.push_str("\\\\"),
-            '"' => result.push_str("\\\""),
-            c if c.is_control() => result.push_str(&format!("\\u{:04x}", c as u32)),
-            c => result.push(c),
-        }
-    }
-    result.push('"');
-    result
 }
