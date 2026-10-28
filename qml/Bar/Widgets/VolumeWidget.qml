@@ -3,7 +3,7 @@ import Noctalia
 import ".."
 import "../../Widgets"
 
-// Noctalia: left = control center > audio, right = mute, scroll = volume ±5%.
+// Noctalia: left = control center > audio, right = mute, scroll = volume ±1%.
 BarWidget {
   id: root
 
@@ -17,8 +17,8 @@ BarWidget {
 
   onClicked: Panels.toggle("control-center:audio")
   onRightClicked: Audio.toggleMute()
-  onWheelUp: Audio.changeVolume(0.05)
-  onWheelDown: Audio.changeVolume(-0.05)
+  onWheelUp: Audio.changeVolume(0.01)
+  onWheelDown: Audio.changeVolume(-0.01)
 
   SculptedIcon { symbol: "volume"; disabled: Audio.muted || root.percent === 0 }
 }

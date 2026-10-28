@@ -34,9 +34,10 @@ Item {
     anchors.rightMargin: Style.spaceMd
     anchors.verticalCenter: parent.verticalCenter
     value: root.value
+    wheelStep: 0.01
     enabled: root.available
     accent: root.muted ? Theme.colors.onSurfaceVariant : Theme.colors.primary
-    onMoved: v => root.moved(v)
+    onMoved: v => root.moved(Math.round(v * 100) / 100)
   }
 
   NText {

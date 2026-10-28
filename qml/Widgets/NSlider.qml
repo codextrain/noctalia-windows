@@ -8,6 +8,7 @@ Item {
   id: root
 
   property real value: 0
+  property real wheelStep: 0.05
   property bool enabled: true
   property color accent: Theme.colors.primary
   readonly property bool pressed: drag.pressed
@@ -74,7 +75,8 @@ Item {
       root.moved(root.dragValue);
     }
     onWheel: event => {
-      const step = event.angleDelta.y > 0 ? 0.05 : -0.05;
+      if (!event.angleDelta.y) return;
+      const step = event.angleDelta.y > 0 ? root.wheelStep : -root.wheelStep;
       root.moved(Math.max(0, Math.min(1, root.value + step)));
     }
   }
