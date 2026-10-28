@@ -25,16 +25,21 @@ def parse(text):
     minutes=n*(60 if match[2].startswith('hora') else 1)
     return {'action':'schedule','minutes':minutes} if 1<=minutes<=1440 else None
 
-def spoken(n):
+def spoken(n,feminine=False):
     words={v:k for k,v in NUMBERS.items()}
-    if n in words:return words[n]
-    return words[n//10*10]+' e '+words[n%10]
+    # Reverse lookup otherwise picks the last aliases: uma/duas, wrong for minutos.
+    words.update({1:'um',2:'dois',14:'quatorze'})
+    text=words[n] if n in words else words[n//10*10]+' e '+words[n%10]
+    if feminine:
+        if text.endswith('um'):text=text[:-2]+'uma'
+        elif text.endswith('dois'):text=text[:-4]+'duas'
+    return text
 def grammar():
     phrases=[]
     for wake in ['pê cê','p c']:
         phrases += [wake+' cancelar',wake+' desativar comandos de voz']
         phrases += [f'{wake} desligar em {spoken(n)} '+('minuto' if n==1 else 'minutos') for n in range(1,61)]
-        phrases += [f'{wake} desligar em {spoken(n)} '+('hora' if n==1 else 'horas') for n in range(1,25)]
+        phrases += [f'{wake} desligar em {spoken(n,True)} '+('hora' if n==1 else 'horas') for n in range(1,25)]
     return phrases+['[unk]']
 
 def write_state(path,value):

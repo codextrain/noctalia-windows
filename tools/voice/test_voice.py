@@ -8,6 +8,22 @@ class Commands(unittest.TestCase):
   for phrase in ['PC cancelar','pê cê cancelar','p c cancelar']:
    self.assertEqual(parse(phrase),{'action':'cancel'})
   self.assertEqual(parse('PC desativar comandos de voz'),{'action':'disable'})
+ def test_short_minutes_and_grammar_gender(self):
+  from vitoria_voice import spoken
+  for phrase in ['PC desligar em dois minutos','PC desligar em 2 minutos','pê cê desligar em dois minutos']:
+   self.assertEqual(parse(phrase),{'action':'schedule','minutes':2})
+  phrases=grammar()
+  for wake in ['pê cê','p c']:
+   for n in range(1,61):
+    self.assertIn(f'{wake} desligar em {spoken(n)} '+('minuto' if n==1 else 'minutos'),phrases)
+   self.assertIn(wake+' desligar em um minuto',phrases)
+   self.assertIn(wake+' desligar em dois minutos',phrases)
+   self.assertIn(wake+' desligar em vinte e dois minutos',phrases)
+   self.assertIn(wake+' desligar em uma hora',phrases)
+   self.assertIn(wake+' desligar em duas horas',phrases)
+   self.assertIn(wake+' desligar em vinte e uma horas',phrases)
+   self.assertNotIn(wake+' desligar em duas minutos',phrases)
+   self.assertNotIn(wake+' desligar em uma minuto',phrases)
  def test_reject_unrelated_and_out_of_range(self):
   for phrase in ['computador desligar em uma hora','desligar em uma hora','PC desligar agora','PC desligar em zero minutos','PC desligar em 25 horas','PC formatar disco','o pc desligar em uma hora']:
    self.assertIsNone(parse(phrase))
