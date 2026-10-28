@@ -10,10 +10,28 @@ Item {
   readonly property real thumbHeight:target?Math.min(height,Math.max(28,height*target.height/Math.max(1,target.contentHeight))):height
   readonly property real progress:target&&scrollRange>0?Math.max(0,Math.min(1,(target.contentY-target.originY)/scrollRange)):0
   property real grabOffset:0
+  property bool dragging:false
+  property var dragTarget:null
+  property bool savedInteractive:true
   signal scrollFinished()
   width:14;visible:scrollRange>0;z:100
   Accessible.role:Accessible.ScrollBar
   Accessible.name:"Rolagem dos wallpapers"
+  function beginDrag() {
+    if(!target)return;
+    dragTarget=target;savedInteractive=target.interactive;dragging=true;
+    target.cancelFlick();target.interactive=false;
+  }
+  function endDrag(notify) {
+    if(!dragging)return;
+    dragging=false;
+    if(dragTarget)dragTarget.interactive=savedInteractive;
+    dragTarget=null;
+    if(notify)scrollFinished();
+  }
+  onVisibleChanged:if(!visible)endDrag(false)
+  onTargetChanged:endDrag(false)
+  Component.onDestruction:endDrag(false)
   function setProgress(value) {
     if(!target)return;
     target.cancelFlick();
@@ -29,13 +47,17 @@ Item {
   }
   MouseArea {
     id:mouse;anchors.fill:parent;hoverEnabled:true
+    acceptedButtons:Qt.LeftButton
+    preventStealing:true
     cursorShape:Qt.PointingHandCursor
     onPressed:event=>{
+      root.beginDrag();
       root.grabOffset=event.y>=thumb.y&&event.y<=thumb.y+thumb.height?event.y-thumb.y:thumb.height/2;
       root.setProgress((event.y-root.grabOffset)/Math.max(1,root.height-thumb.height));
     }
-    onPositionChanged:event=>{if(pressed)root.setProgress((event.y-root.grabOffset)/Math.max(1,root.height-thumb.height));}
-    onReleased:root.scrollFinished()
+    onPositionChanged:event=>{if(root.dragging)root.setProgress((event.y-root.grabOffset)/Math.max(1,root.height-thumb.height));}
+    onReleased:root.endDrag(true)
+    onCanceled:root.endDrag(false)
     onWheel:event=>{if(root.target){root.setProgress(root.progress-event.angleDelta.y/120*80/Math.max(1,root.scrollRange));event.accepted=true;}}
   }
 }

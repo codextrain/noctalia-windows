@@ -7,6 +7,7 @@ GridView {
     id: og
     property bool active: true
     property bool loading: active && WallStore.busy
+    readonly property bool scrollbarDragging:sidebar.dragging
     signal requestMore()
     clip: true
     boundsBehavior: Flickable.StopAtBounds
@@ -46,6 +47,7 @@ GridView {
     cellHeight: Math.round(cellWidth * 0.62) + 8
     cacheBuffer: 600
     ViewportScrollBar {
+      id:sidebar
       parent:og;target:og;anchors.right:parent.right;anchors.top:parent.top;anchors.bottom:parent.bottom
       onScrollFinished:if(og.atYEnd && og.active && og.visible && !og.syncing)og.requestMore()
     }

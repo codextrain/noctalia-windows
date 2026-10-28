@@ -345,8 +345,8 @@ PanelWindow {
         anchors.bottomMargin: Style.spaceSm
         width: parent.width
         active: wp.showing === "wallhaven"
-        onAtYEndChanged: if (atYEnd && active && visible && count>0 && !syncing) WallStore.loadMore()
-        onMovementEnded: if (atYEnd && active && visible && count>0 && !syncing) WallStore.loadMore()
+        onAtYEndChanged: if (atYEnd && active && visible && count>0 && !syncing && !scrollbarDragging) WallStore.loadMore()
+        onMovementEnded: if (atYEnd && active && visible && count>0 && !syncing && !scrollbarDragging) WallStore.loadMore()
         onRequestMore: WallStore.loadMore()
       }
 
