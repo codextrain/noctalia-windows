@@ -31,13 +31,16 @@ PanelWindow {
   property string whResolution: "1920x1080"
   property int bulkCount: 500
   property string showing: "" // what WallStore.results currently holds: "wallhaven" | collection repo
+  property int onlineRevision: 0
   property string collection: ""
 
   function whSearch() {
+    onlineRevision++;
     showing = "wallhaven";
     WallStore.searchWallhaven(whQuery, whSorting, whResolution, 1);
   }
   function openCollection(repo) {
+    onlineRevision++;
     collection = repo;
     showing = repo;
     WallStore.openCollection(repo);
@@ -198,9 +201,10 @@ PanelWindow {
         clip: true
         boundsBehavior: Flickable.StopAtBounds
         model: wp.filtered
-        cellWidth: Math.floor(width / 4)
+        cellWidth: Math.floor((width - 18) / 4)
         cellHeight: Math.round(cellWidth * 0.62) + 22
         cacheBuffer: 400
+        ViewportScrollBar {parent:grid;target:grid;anchors.right:parent.right;anchors.top:parent.top;anchors.bottom:parent.bottom}
 
         delegate: Item {
           id: thumb
@@ -331,15 +335,19 @@ PanelWindow {
         }
       }
 
-      OnlineGrid {
+      OnlineWallpaperGrid {
+        revision: wp.onlineRevision
         id: whGrid
+        objectName: "wallhaven-grid"
         anchors.top: tags.bottom
         anchors.topMargin: Style.spaceSm
         anchors.bottom: whFooter.top
         anchors.bottomMargin: Style.spaceSm
         width: parent.width
         active: wp.showing === "wallhaven"
-        onAtYEndChanged: if (atYEnd && active) WallStore.loadMore()
+        onAtYEndChanged: if (atYEnd && active && visible && count>0 && !syncing) WallStore.loadMore()
+        onMovementEnded: if (atYEnd && active && visible && count>0 && !syncing) WallStore.loadMore()
+        onRequestMore: WallStore.loadMore()
       }
 
       Row {
@@ -457,7 +465,8 @@ PanelWindow {
         }
       }
 
-      OnlineGrid {
+      OnlineWallpaperGrid {
+        revision: wp.onlineRevision
         anchors.top: colInfo.bottom
         anchors.topMargin: Style.spaceSm
         anchors.bottom: parent.bottom
@@ -592,113 +601,4 @@ PanelWindow {
   }
 
   // Grid of online results: click = download and use; the download button only saves it.
-  component OnlineGrid: GridView {
-    id: og
-    property bool active: true
-    clip: true
-    boundsBehavior: Flickable.StopAtBounds
-    model: active ? WallStore.results : []
-    cellWidth: Math.floor(width / 4)
-    cellHeight: Math.round(cellWidth * 0.62) + 8
-    cacheBuffer: 600
-
-    // (explicit Component: Qt 6.4 rejects an inline delegate inside an inline component)
-    delegate: Component { Item {
-      id: cell
-      required property var modelData
-      readonly property string localPath: WallStore.downloaded[modelData.key] ?? ""
-      readonly property bool isCurrent: localPath.length > 0 && localPath.toLowerCase() === Wallpaper.current.toLowerCase()
-      width: og.cellWidth
-      height: og.cellHeight
-
-      Rectangle {
-        id: card
-        anchors.fill: parent
-        anchors.margins: 4
-        radius: Style.radiusLg
-        color: Theme.colors.surfaceContainer
-        border.width: cell.isCurrent ? 3 : cellMouse.containsMouse ? 2 : 0
-        border.color: cell.isCurrent ? Theme.colors.primary : Theme.colors.hover
-        clip: true
-
-        Image {
-          id: img
-          anchors.fill: parent
-          anchors.margins: card.border.width
-          source: cell.modelData.thumb
-          sourceSize: Qt.size(400, 250)
-          fillMode: Image.PreserveAspectCrop
-          asynchronous: true
-          cache: true
-        }
-        NGlyph {
-          anchors.centerIn: parent
-          visible: img.status !== Image.Ready
-          icon: img.status === Image.Error ? "photo" : "loader"
-          color: Theme.colors.onSurfaceVariant
-        }
-
-        // info strip
-        Rectangle {
-          anchors.left: parent.left
-          anchors.right: parent.right
-          anchors.bottom: parent.bottom
-          anchors.margins: card.border.width
-          height: 22
-          visible: cellMouse.containsMouse
-          color: Style.alpha(Theme.colors.surface, 0.82)
-          NText {
-            anchors.left: parent.left
-            anchors.leftMargin: Style.spaceSm
-            anchors.right: parent.right
-            anchors.rightMargin: 34
-            anchors.verticalCenter: parent.verticalCenter
-            elide: Text.ElideMiddle
-            font.pixelSize: Style.fontSizeMini
-            text: [cell.modelData.resolution, cell.modelData.fileSize, cell.modelData.source === "github" ? cell.modelData.name : ""]
-                  .filter(s => s && s.length).join(" · ")
-          }
-        }
-
-        // downloaded badge / download button
-        Rectangle {
-          anchors.right: parent.right
-          anchors.top: parent.top
-          anchors.margins: 6
-          width: 26
-          height: 26
-          radius: 13
-          visible: cell.localPath.length > 0 || cellMouse.containsMouse || dlMouse.containsMouse
-          color: cell.localPath.length > 0 ? Theme.colors.primary
-               : dlMouse.containsMouse ? Theme.colors.hover : Style.alpha(Theme.colors.surface, 0.85)
-          NGlyph {
-            anchors.centerIn: parent
-            size: 15
-            icon: cell.localPath.length > 0 ? "check" : "download"
-            color: cell.localPath.length > 0 ? Theme.colors.onPrimary : Theme.colors.onSurface
-          }
-          MouseArea {
-            id: dlMouse
-            anchors.fill: parent
-            hoverEnabled: true
-            cursorShape: Qt.PointingHandCursor
-            onClicked: WallStore.download(cell.modelData, false)
-          }
-        }
-      }
-      MouseArea {
-        id: cellMouse
-        anchors.fill: parent
-        z: -1
-        hoverEnabled: true
-        cursorShape: Qt.PointingHandCursor
-        onClicked: WallStore.download(cell.modelData, true)
-      }
-    } }
-
-    EmptyText {
-      visible: og.count === 0
-      text: WallStore.busy ? "Carregando..." : WallStore.error.length > 0 ? "" : "Nada por aqui ainda."
-    }
-  }
 }
