@@ -69,15 +69,58 @@ Canvas {
       line([[18,18],[23,13]],3,"#f2fcff");
     } else if(symbol==="chevron") {
       line([[12,39],[32,21],[52,39]],11,"#4f6485");line([[12,35],[32,17],[52,35]],7,"#dce9ff");
+    } else if(symbol==="home") {
+      plate([[12,28],[34,13],[53,28],[53,54],[12,54]],"#fff0d9","#b6a58e");
+      plate([[6,29],[31,6],[58,29],[53,34],[31,16],[11,34]],"#d4c7fa","#7568ac");
+      plate([[27,36],[39,36],[39,54],[27,54]],"#91c8dd","#416f98");
+    } else if(symbol==="disc") {
+      ball(32,31,26,26,"#f7fbff","#8cb6cd","#505a91");
+      c.strokeStyle="#c9e4f0";c.lineWidth=2;c.beginPath();c.arc(32,31,18,0,Math.PI*2);c.stroke();
+      ball(32,31,9,9,"#d9c8f3","#7d70ad","#303754");ball(32,31,3,3,"#30374c","#1a2235","#0c1223");
+    } else if(symbol==="monitor"||symbol==="system") {
+      line([[32,44],[32,53]],6,"#8b9fb7");ball(32,55,16,3,"#e2eef9","#899bb6","#44546d");
+      plate([[4,8],[57,8],[60,12],[60,44],[56,47],[4,47]],"#e3e6ff","#67758f");
+      plate([[8,12],[54,12],[54,39],[8,39]],"#6393a7","#19273f");
+      if(symbol==="system")line([[11,28],[20,28],[25,18],[32,34],[37,25],[50,25]],3,"#b8f0cb");
+      else line([[12,17],[29,17]],2,"#b2e1eb");
+    } else if(symbol==="hardware") {
+      for(let i=0;i<4;i++){const p=18+i*9;line([[p,4],[p,12]],4,"#b2c4ce");line([[p,50],[p,58]],4,"#829aaa");line([[4,p],[12,p]],4,"#b2c4ce");line([[50,p],[58,p]],4,"#829aaa");}
+      plate([[11,11],[51,11],[54,15],[54,51],[50,54],[11,54]],"#b7cdb2","#41675d");
+      plate([[20,20],[44,20],[44,44],[20,44]],"#e4e0c7","#8b9b93");line([[23,23],[39,23]],2,"#f8f8e3");
+    } else if(symbol==="battery") {
+      plate([[7,16],[52,16],[55,20],[55,49],[7,49]],"#ccdfdf","#5e7a85");
+      line([[57,27],[57,38]],5,"#9bb1b8");
+      plate([[12,22],[46,22],[46,42],[12,42]],"#b5e7ba","#4c9a78");
+      plate([[30,23],[22,33],[29,33],[27,41],[37,29],[30,29]],"#fff0ad","#dac474");
+    } else if(symbol==="bluetooth") {
+      ball(32,31,23,28,"#cadfff","#6e9de0","#394982");
+      line([[23,20],[42,39],[31,49],[31,13],[42,23],[23,42]],4,"#f5f4ff");
+    } else if(symbol==="calendar") {
+      plate([[10,11],[51,11],[55,16],[55,54],[10,54]],"#fbf5e8","#b9b1a2");
+      plate([[10,11],[51,11],[55,16],[55,25],[10,25]],"#efb2ba","#b56d8c");
+      line([[21,7],[21,17]],4,"#c4d1db");line([[43,7],[43,17]],4,"#c4d1db");
+      for(let y=33;y<=43;y+=10)for(let x=21;x<=43;x+=11)ball(x,y,2.5,2.5,"#9194b2","#5a6583","#3f4c67");
+    } else if(symbol==="temperature") {
+      line([[30,12],[30,44]],14,"#d3e8ef");line([[30,14],[30,44]],7,"#d49aaa");
+      ball(30,46,13,13,"#ffe9e5","#dc929e","#9d576f");line([[29,16],[29,38]],2,"#fff5ef");
+    } else if(symbol==="droplet") {
+      const g=c.createLinearGradient(13,12,46,55);g.addColorStop(0,"#d1f8ff");g.addColorStop(.5,"#77bee1");g.addColorStop(1,"#3662a2");
+      c.fillStyle=g;c.beginPath();c.moveTo(32,5);c.bezierCurveTo(26,19,10,30,14,43);c.bezierCurveTo(19,65,57,55,49,33);c.bezierCurveTo(44,22,36,13,32,5);c.fill();
+      line([[21,34],[19,41]],3,"#e3faff");
+    } else if(symbol==="wind") {
+      c.lineWidth=6;c.strokeStyle="#7196b4";c.beginPath();c.moveTo(7,22);c.lineTo(41,22);c.bezierCurveTo(58,22,54,6,44,10);c.moveTo(8,35);c.lineTo(48,35);c.moveTo(15,47);c.lineTo(34,47);c.bezierCurveTo(49,47,45,59,37,56);c.stroke();
+      line([[7,20],[40,20]],2,"#e5f6ff");line([[8,33],[48,33]],2,"#d9efff");line([[15,45],[33,45]],2,"#d9efff");
     } else if(symbol==="weather") {
       const night=condition.indexOf("moon")>=0;
-      ball(23,22,17,17,night?"#fcfcff":"#fff9cb",night?"#b8c9ed":"#ffd079",night?"#7486ac":"#d9903c");
+      if(condition!=="weather-cloud"&&condition.indexOf("haze")<0&&condition.indexOf("rain")<0&&condition.indexOf("lightning")<0&&condition.indexOf("snow")<0)
+        ball(23,22,17,17,night?"#fcfcff":"#fff9cb",night?"#b8c9ed":"#ffd079",night?"#7486ac":"#d9903c");
       if(night)ball(31,16,14,14,"#27344e","#27344e","#182139");
       if(condition.indexOf("cloud")>=0||condition.indexOf("rain")>=0||condition.indexOf("snow")>=0||condition.indexOf("storm")>=0){
         ball(26,38,19,12,"#f5fbff","#d0e4f0","#7d9cb5");ball(36,30,14,15,"#fffaff","#d2e2ed","#8da7be");ball(47,39,12,10,"#f4faff","#cbdeeb","#779bb9");
       }
       if(condition.indexOf("rain")>=0)for(let i=0;i<3;i++)line([[22+i*12,51],[19+i*12,57]],3,"#78bbef");
       if(condition.indexOf("snow")>=0)for(let i=0;i<3;i++)ball(20+i*13,55,2,2,"#ffffff","#d4f3ff","#8db3d6");
+      if(condition.indexOf("lightning")>=0)plate([[34,41],[26,52],[33,52],[30,61],[43,47],[35,47]],"#fff3b8","#e5bb69");
     }
   }
 }

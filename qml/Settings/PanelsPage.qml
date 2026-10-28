@@ -2,8 +2,11 @@ import QtQuick
 import Noctalia
 import "../Commons"
 import "../Widgets"
+import "../Commons/LocationPolicy.js" as LocationPolicy
 
 Column {
+  id: page
+  property string locationError: ""
   spacing: Style.spaceMd
 
   SettingSection {
@@ -11,12 +14,16 @@ Column {
     SettingRow { label: "Mostrar clima"; NToggle { checked: Config.weather.enabled ?? true; onToggled: on => Config.setValue("weather.enabled", on) } }
     SettingRow {
       label: "Cidade"
-      description: "Ex.: Joinville, SC"
-      TextBox { value: Config.location.address ?? ""; onEdited: v => Config.setValue("location.address", v) }
+      description: page.locationError || "Ex.: São Bento do Sul, SC. Confirmar uma cidade desativa a localização por IP."
+      TextBox { value: Config.location.address ?? ""; onEdited: v => {
+        const next=LocationPolicy.manual(Config.location,v);
+        page.locationError=next?"":"Digite o nome de uma cidade.";
+        if(next)Config.setValue("location",next);
+      } }
     }
     SettingRow {
       label: "Descobrir pela internet"
-      description: "Usa seu endereço IP para achar a cidade."
+      description: "O IP pode indicar uma cidade vizinha. Deixe desligado para usar a cidade escolhida acima."
       NToggle { checked: Config.location.auto_locate ?? false; onToggled: on => Config.setValue("location.auto_locate", on) }
     }
     SettingRow {
