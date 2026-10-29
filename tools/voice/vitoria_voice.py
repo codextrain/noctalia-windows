@@ -43,13 +43,25 @@ def grammar():
     return phrases+['[unk]']
 
 def write_state(path,value):
-    path.parent.mkdir(parents=True,exist_ok=True)
-    tmp=path.with_suffix('.tmp')
-    tmp.write_text(json.dumps(value,ensure_ascii=False),encoding='utf-8')
-    for _ in range(5):
-        try:os.replace(tmp,path);return
-        except PermissionError:time.sleep(.04)
-    raise OSError('Estado da voz em uso.')
+    # Readers can briefly hold the destination open on Windows. Keep the previous
+    # complete JSON and retry on the next heartbeat instead of terminating voice.
+    tmp=path.with_name(path.name+'.'+uuid.uuid4().hex+'.tmp')
+    try:
+        path.parent.mkdir(parents=True,exist_ok=True)
+        tmp.write_text(json.dumps(value,ensure_ascii=False),encoding='utf-8')
+        for attempt in range(5):
+            try:
+                os.replace(tmp,path)
+                return True
+            except PermissionError:
+                if attempt<4:time.sleep(.04)
+        return False
+    except OSError:
+        return False
+    finally:
+        try:tmp.unlink(missing_ok=True)
+        except OSError:pass
+
 
 def enabled(config):
     try:return json.loads(config.read_text(encoding='utf-8-sig')).get('windows',{}).get('shutdown_voice_enabled') is True

@@ -46,3 +46,19 @@ class Feedback(unittest.TestCase):
    write({'id':'failed','action':'schedule','accepted':False,'createdAt':9000});feedback(p,seen,lambda:sounds.append(1),10000);self.assertEqual(len(sounds),1)
 
 if __name__=='__main__':unittest.main()
+
+class StateWrites(unittest.TestCase):
+ def test_busy_destination_recovers(self):
+  import json,tempfile
+  from pathlib import Path
+  from unittest.mock import patch
+  import vitoria_voice as voice
+  with tempfile.TemporaryDirectory() as folder:
+   target=Path(folder)/'state.json'
+   target.write_text('{"old":true}')
+   with patch.object(voice.os,'replace',side_effect=PermissionError('busy')),patch.object(voice.time,'sleep'):
+    self.assertFalse(voice.write_state(target,{'new':True}))
+   self.assertEqual(json.loads(target.read_text()),{'old':True})
+   self.assertEqual(list(Path(folder).glob('*.tmp')),[])
+   self.assertTrue(voice.write_state(target,{'new':True}))
+   self.assertEqual(json.loads(target.read_text()),{'new':True})
