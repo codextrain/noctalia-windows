@@ -62,6 +62,26 @@ Flickable {
     }
   }
 
+  NCard {
+    width: stats.width
+    height: desktopControls.height + 2 * padding
+    Column {
+      id: desktopControls
+      width: parent.width
+      spacing: Style.spaceSm
+      NSectionTitle {text: "Vitória Shell e NiriWin"}
+      NText {
+        width:parent.width;wrapMode:Text.WordWrap;color:Theme.colors.onSurfaceVariant
+        text: DesktopControl.available ? "Desativa os dois e restaura a barra e as janelas do Windows. Para ativar novamente, abra Vitória Shell no menu Iniciar. A escolha permanece após reiniciar o PC." : "Instale o controle do desktop para ativar esta opção."
+      }
+      NListItem {
+        width:parent.width;icon:"power";title:"Desativar Vitória Shell e NiriWin"
+        enabled:DesktopControl.available;opacity:enabled ? 1 : 0.5
+        onClicked:DesktopControl.disable()
+      }
+    }
+  }
+
   // CPU with a small history graph
   NCard {
     width: stats.width

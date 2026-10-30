@@ -4,3 +4,5 @@ singleton GpuTelemetry 1.0 GpuTelemetry.qml
 singleton RunningAppsFeed 1.0 RunningAppsFeed.qml
 
 singleton ShutdownTimer 1.0 ShutdownTimer.qml
+
+singleton DesktopControl 1.0 DesktopControl.qml
